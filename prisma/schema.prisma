@@ -66,12 +66,13 @@ model Verification {
 // ============== Application Tables ==============
 
 model Structure {
-  id        String     @id @default(cuid())
-  name      String
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id            String     @id @default(cuid())
+  name          String
+  referentEmail String
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 
-  campaigns   Campaign[]
+  campaigns    Campaign[]
   savedSurveys SavedSurvey[]
 }
 
@@ -92,6 +93,7 @@ model Campaign {
   name           String
   startDate      DateTime
   expirationDate DateTime
+  maxResponses   Int?
   status         CampaignStatus @default(EN_COURS)
   surveyType     SurveyType
   createdAt      DateTime       @default(now())
