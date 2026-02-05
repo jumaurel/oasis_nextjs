@@ -20,9 +20,7 @@ export const createCampaignSchema = z
       .optional()
       .nullable(),
     surveyType: z.enum(surveyTypes, {
-      errorMap: () => ({
-        message: "Veuillez sélectionner un type de questionnaire",
-      }),
+      message: "Veuillez sélectionner un type de questionnaire",
     }),
   })
   .refine(
