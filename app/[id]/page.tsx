@@ -8,10 +8,10 @@ interface Props {
 export default async function QuestionnairePage({ params }: Props) {
   const { id } = await params;
 
-  // Récupérer la campagne par son ID
-  let campaign = null;
+  // Récupérer l'enquête par son ID
+  let survey = null;
   try {
-    campaign = await prisma.campaign.findUnique({
+    survey = await prisma.survey.findUnique({
       where: { id },
       include: { structure: true },
     });
@@ -20,18 +20,18 @@ export default async function QuestionnairePage({ params }: Props) {
     return (
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4">
         <div className="w-full max-w-2xl text-center">
-          <div className="rounded-xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <h1 className="mb-4 text-2xl font-bold text-zinc-900 dark:text-white">
+          <div className="rounded-xl border border-border bg-card p-8 shadow-sm">
+            <h1 className="mb-4 text-2xl font-bold text-primary">
               Questionnaire : {id}
             </h1>
-            <p className="mb-6 text-zinc-600 dark:text-zinc-400">
+            <p className="mb-6 text-text-muted">
               Le questionnaire sera affiché ici une fois la base de données
               configurée.
             </p>
-            <div className="rounded-lg bg-amber-100 p-4 text-sm text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+            <div className="rounded-lg bg-accent-orange-light p-4 text-sm text-amber-800">
               Configuration de la base de données requise. Veuillez configurer
               votre URL Neon dans le fichier .env et exécuter{" "}
-              <code className="rounded bg-amber-200 px-1 dark:bg-amber-800">
+              <code className="rounded bg-amber-200 px-1">
                 npx prisma db push
               </code>
             </div>
@@ -41,28 +41,36 @@ export default async function QuestionnairePage({ params }: Props) {
     );
   }
 
-  if (!campaign) {
+  if (!survey) {
     notFound();
   }
 
-  // Vérifier si la campagne est active
+  // Vérifier si l'enquête est active
   const now = new Date();
-  const isExpired = campaign.expirationDate < now;
-  const notStarted = campaign.startDate > now;
-  const isClosed =
-    campaign.status === "FERMEE" || campaign.status === "EXPIREE";
+  const isExpired = survey.expirationDate < now;
+  const notStarted = survey.startDate > now;
+  const isClosed = survey.status === "FERMEE" || survey.status === "EXPIREE";
 
   if (isClosed || isExpired) {
     return (
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4">
         <div className="w-full max-w-2xl text-center">
-          <div className="rounded-xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <h1 className="mb-4 text-2xl font-bold text-zinc-900 dark:text-white">
+          <div className="rounded-xl border border-border bg-card p-8 shadow-sm">
+            <h1 className="mb-4 text-2xl font-bold text-primary">
               Questionnaire terminé
             </h1>
-            <p className="text-zinc-600 dark:text-zinc-400">
-              Ce questionnaire n&apos;est plus disponible. La campagne est{" "}
-              {isExpired ? "expirée" : "fermée"}.
+            <p className="text-text-muted">
+              Ce questionnaire n&apos;est plus disponible. L&apos;enquête est{" "}
+              <span
+                className={
+                  isExpired
+                    ? "font-semibold text-accent-red"
+                    : "font-semibold text-text-muted"
+                }
+              >
+                {isExpired ? "expirée" : "fermée"}
+              </span>
+              .
             </p>
           </div>
         </div>
@@ -74,13 +82,13 @@ export default async function QuestionnairePage({ params }: Props) {
     return (
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4">
         <div className="w-full max-w-2xl text-center">
-          <div className="rounded-xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <h1 className="mb-4 text-2xl font-bold text-zinc-900 dark:text-white">
+          <div className="rounded-xl border border-border bg-card p-8 shadow-sm">
+            <h1 className="mb-4 text-2xl font-bold text-primary">
               Questionnaire à venir
             </h1>
-            <p className="text-zinc-600 dark:text-zinc-400">
+            <p className="text-text-muted">
               Ce questionnaire n&apos;est pas encore ouvert. Il sera disponible
-              le {campaign.startDate.toLocaleDateString("fr-FR")}.
+              le {survey.startDate.toLocaleDateString("fr-FR")}.
             </p>
           </div>
         </div>
@@ -91,43 +99,43 @@ export default async function QuestionnairePage({ params }: Props) {
   return (
     <div className="min-h-[calc(100vh-4rem)] px-4 py-8">
       <div className="mx-auto max-w-3xl">
-        <div className="mb-8 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <h1 className="mb-2 text-2xl font-bold text-zinc-900 dark:text-white">
-            {campaign.name}
+        <div className="mb-8 rounded-xl border border-border bg-card p-6 shadow-sm">
+          <h1 className="mb-2 text-2xl font-bold text-primary">
+            {survey.name}
           </h1>
-          <p className="mb-4 text-zinc-600 dark:text-zinc-400">
-            {campaign.structure.name} - Type :{" "}
-            {campaign.surveyType === "AIRE_ET_MOTS"
+          <p className="mb-4 text-text-muted">
+            {survey.structure.name} — Type :{" "}
+            {survey.surveyType === "AIRE_ET_MOTS"
               ? "AIRE & MOTS"
-              : campaign.surveyType}
+              : survey.surveyType}
           </p>
-          <div className="rounded-lg bg-blue-50 p-4 text-sm text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+          <div className="rounded-lg bg-blue-50 border border-blue-200 p-4 text-sm text-blue-800">
             Le contenu du questionnaire sera implémenté ultérieurement.
           </div>
         </div>
 
         {/* Placeholder pour le formulaire de questionnaire */}
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-white">
+        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <h2 className="mb-4 text-lg font-semibold text-primary">
             Informations du répondant
           </h2>
           <form className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <label className="mb-1 block text-sm font-medium text-foreground">
                   Âge
                 </label>
                 <input
                   type="number"
-                  className="w-full rounded-lg border border-zinc-300 bg-white px-4 py-2 dark:border-zinc-700 dark:bg-zinc-800"
+                  className="w-full rounded-lg border border-border bg-white px-4 py-2 text-foreground focus:border-accent-teal focus:outline-none focus:ring-2 focus:ring-accent-teal/20"
                   placeholder="Votre âge"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <label className="mb-1 block text-sm font-medium text-foreground">
                   Genre
                 </label>
-                <select className="w-full rounded-lg border border-zinc-300 bg-white px-4 py-2 dark:border-zinc-700 dark:bg-zinc-800">
+                <select className="w-full rounded-lg border border-border bg-white px-4 py-2 text-foreground focus:border-accent-teal focus:outline-none focus:ring-2 focus:ring-accent-teal/20">
                   <option value="">Sélectionner</option>
                   <option value="homme">Homme</option>
                   <option value="femme">Femme</option>
@@ -136,29 +144,29 @@ export default async function QuestionnairePage({ params }: Props) {
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <label className="mb-1 block text-sm font-medium text-foreground">
                   Région
                 </label>
                 <input
                   type="text"
-                  className="w-full rounded-lg border border-zinc-300 bg-white px-4 py-2 dark:border-zinc-700 dark:bg-zinc-800"
+                  className="w-full rounded-lg border border-border bg-white px-4 py-2 text-foreground focus:border-accent-teal focus:outline-none focus:ring-2 focus:ring-accent-teal/20"
                   placeholder="Votre région"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <label className="mb-1 block text-sm font-medium text-foreground">
                   Spécialité
                 </label>
                 <input
                   type="text"
-                  className="w-full rounded-lg border border-zinc-300 bg-white px-4 py-2 dark:border-zinc-700 dark:bg-zinc-800"
+                  className="w-full rounded-lg border border-border bg-white px-4 py-2 text-foreground focus:border-accent-teal focus:outline-none focus:ring-2 focus:ring-accent-teal/20"
                   placeholder="Votre spécialité"
                 />
               </div>
             </div>
 
             <div className="pt-4">
-              <p className="text-center text-sm text-zinc-500 dark:text-zinc-500">
+              <p className="text-center text-sm text-text-muted">
                 Les questions du questionnaire seront affichées ici.
               </p>
             </div>

@@ -72,11 +72,11 @@ model Structure {
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 
-  campaigns    Campaign[]
+  surveys      Survey[]
   savedSurveys SavedSurvey[]
 }
 
-enum CampaignStatus {
+enum SurveyStatus {
   EN_COURS
   FERMEE
   EXPIREE
@@ -88,13 +88,13 @@ enum SurveyType {
   AIRE_ET_MOTS
 }
 
-model Campaign {
+model Survey {
   id             String         @id @default(cuid())
   name           String
   startDate      DateTime
   expirationDate DateTime
   maxResponses   Int?
-  status         CampaignStatus @default(EN_COURS)
+  status         SurveyStatus   @default(EN_COURS)
   surveyType     SurveyType
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
@@ -117,8 +117,8 @@ model SavedSurvey {
   structureId String
   structure   Structure @relation(fields: [structureId], references: [id], onDelete: Cascade)
 
-  campaignId String
-  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  surveyId String
+  survey   Survey @relation(fields: [surveyId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

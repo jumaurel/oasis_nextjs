@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth-server";
-import { createCampaignSchema } from "@/lib/validations/campaign";
+import { createSurveySchema } from "@/lib/validations/survey";
 
 export async function GET() {
   const session = await getSession();
@@ -11,7 +11,7 @@ export async function GET() {
   }
 
   try {
-    const campaigns = await prisma.campaign.findMany({
+    const surveys = await prisma.survey.findMany({
       orderBy: { createdAt: "desc" },
       include: {
         structure: true,
@@ -21,11 +21,11 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json(campaigns);
+    return NextResponse.json(surveys);
   } catch (error) {
-    console.error("Error fetching campaigns:", error);
+    console.error("Error fetching surveys:", error);
     return NextResponse.json(
-      { error: "Erreur lors de la récupération des campagnes" },
+      { error: "Erreur lors de la récupération des enquêtes" },
       { status: 500 },
     );
   }
@@ -40,9 +40,9 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const validatedData = createCampaignSchema.parse(body);
+    const validatedData = createSurveySchema.parse(body);
 
-    const campaign = await prisma.campaign.create({
+    const survey = await prisma.survey.create({
       data: {
         name: validatedData.name,
         structureId: validatedData.structureId,
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json(campaign, { status: 201 });
+    return NextResponse.json(survey, { status: 201 });
   } catch (error) {
     if (error instanceof Error && error.name === "ZodError") {
       return NextResponse.json(
@@ -65,9 +65,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.error("Error creating campaign:", error);
+    console.error("Error creating survey:", error);
     return NextResponse.json(
-      { error: "Erreur lors de la création de la campagne" },
+      { error: "Erreur lors de la création de l'enquête" },
       { status: 500 },
     );
   }

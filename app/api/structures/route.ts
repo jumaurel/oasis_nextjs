@@ -15,7 +15,7 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
       include: {
         _count: {
-          select: { campaigns: true, savedSurveys: true },
+          select: { surveys: true, savedSurveys: true },
         },
       },
     });

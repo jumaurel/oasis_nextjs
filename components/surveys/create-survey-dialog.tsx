@@ -5,17 +5,17 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Dialog } from "@/components/ui/dialog";
 import {
-  createCampaignSchema,
+  createSurveySchema,
   surveyTypes,
-  type CreateCampaignInput,
-} from "@/lib/validations/campaign";
+  type CreateSurveyInput,
+} from "@/lib/validations/survey";
 
 interface Structure {
   id: string;
   name: string;
 }
 
-interface CreateCampaignDialogProps {
+interface CreateSurveyDialogProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
@@ -27,11 +27,11 @@ const surveyTypeLabels: Record<(typeof surveyTypes)[number], string> = {
   AIRE_ET_MOTS: "AIRE & MOTS",
 };
 
-export function CreateCampaignDialog({
+export function CreateSurveyDialog({
   open,
   onClose,
   onSuccess,
-}: CreateCampaignDialogProps) {
+}: CreateSurveyDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState("");
   const [structures, setStructures] = useState<Structure[]>([]);
@@ -42,8 +42,8 @@ export function CreateCampaignDialog({
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<CreateCampaignInput>({
-    resolver: zodResolver(createCampaignSchema),
+  } = useForm<CreateSurveyInput>({
+    resolver: zodResolver(createSurveySchema),
     defaultValues: {
       maxResponses: null,
     },
@@ -70,12 +70,12 @@ export function CreateCampaignDialog({
     }
   };
 
-  const onSubmit = async (data: CreateCampaignInput) => {
+  const onSubmit = async (data: CreateSurveyInput) => {
     setIsSubmitting(true);
     setServerError("");
 
     try {
-      const response = await fetch("/api/campaigns", {
+      const response = await fetch("/api/surveys", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -115,7 +115,7 @@ export function CreateCampaignDialog({
     .split("T")[0];
 
   return (
-    <Dialog open={open} onClose={handleClose} title="Nouvelle campagne">
+    <Dialog open={open} onClose={handleClose} title="Nouvelle enquête">
       {serverError && (
         <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-accent-red">
           {serverError}
@@ -125,7 +125,7 @@ export function CreateCampaignDialog({
       {structures.length === 0 && !isLoadingStructures ? (
         <div className="rounded-lg bg-accent-orange-light border border-amber-300 p-4 text-sm text-amber-800">
           Vous devez d&apos;abord créer une structure avant de pouvoir créer une
-          campagne.
+          enquête.
         </div>
       ) : (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -165,14 +165,14 @@ export function CreateCampaignDialog({
               htmlFor="name"
               className="mb-1 block text-sm font-medium text-foreground"
             >
-              Nom de la campagne
+              Nom de l&apos;enquête
             </label>
             <input
               type="text"
               id="name"
               {...register("name")}
               className="w-full rounded-lg border border-border bg-white px-4 py-2 text-foreground focus:border-accent-teal focus:outline-none focus:ring-2 focus:ring-accent-teal/20"
-              placeholder="Ex: Enquête satisfaction 2026"
+              placeholder="Ex: Enquête du 16/09/2024"
             />
             {errors.name && (
               <p className="mt-1 text-sm text-accent-red">

@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const surveyTypes = ["AIRE", "MOTS", "AIRE_ET_MOTS"] as const;
 
-export const createCampaignSchema = z
+export const createSurveySchema = z
   .object({
     name: z
       .string()
@@ -35,4 +35,4 @@ export const createCampaignSchema = z
     },
   );
 
-export type CreateCampaignInput = z.infer<typeof createCampaignSchema>;
+export type CreateSurveyInput = z.infer<typeof createSurveySchema>;

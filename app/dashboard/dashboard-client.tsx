@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { CreateStructureDialog } from "@/components/structures/create-structure-dialog";
-import { CreateCampaignDialog } from "@/components/campaigns/create-campaign-dialog";
+import { CreateSurveyDialog } from "@/components/surveys/create-survey-dialog";
 
 interface Structure {
   id: string;
@@ -10,12 +11,12 @@ interface Structure {
   referentEmail: string;
   createdAt: string;
   _count: {
-    campaigns: number;
+    surveys: number;
     savedSurveys: number;
   };
 }
 
-interface Campaign {
+interface Survey {
   id: string;
   name: string;
   startDate: string;
@@ -37,11 +38,12 @@ interface DashboardClientProps {
 }
 
 export function DashboardClient({ userName }: DashboardClientProps) {
+  void userName; // Used in header via session
   const [structures, setStructures] = useState<Structure[]>([]);
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [surveys, setSurveys] = useState<Survey[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isStructureDialogOpen, setIsStructureDialogOpen] = useState(false);
-  const [isCampaignDialogOpen, setIsCampaignDialogOpen] = useState(false);
+  const [isSurveyDialogOpen, setIsSurveyDialogOpen] = useState(false);
 
   const fetchStructures = useCallback(async () => {
     try {
@@ -55,248 +57,133 @@ export function DashboardClient({ userName }: DashboardClientProps) {
     }
   }, []);
 
-  const fetchCampaigns = useCallback(async () => {
+  const fetchSurveys = useCallback(async () => {
     try {
-      const response = await fetch("/api/campaigns");
+      const response = await fetch("/api/surveys");
       if (response.ok) {
         const data = await response.json();
-        setCampaigns(data);
+        setSurveys(data);
       }
     } catch (error) {
-      console.error("Error fetching campaigns:", error);
+      console.error("Error fetching surveys:", error);
     }
   }, []);
 
   useEffect(() => {
     const loadData = async () => {
-      await Promise.all([fetchStructures(), fetchCampaigns()]);
+      await Promise.all([fetchStructures(), fetchSurveys()]);
       setIsLoading(false);
     };
     loadData();
-  }, [fetchStructures, fetchCampaigns]);
+  }, [fetchStructures, fetchSurveys]);
 
-  const totalCampaigns = structures.reduce(
-    (acc, s) => acc + s._count.campaigns,
-    0,
-  );
   const totalResponses = structures.reduce(
     (acc, s) => acc + s._count.savedSurveys,
     0,
   );
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-zinc-50 px-4 py-8 dark:bg-zinc-950">
+    <div className="min-h-[calc(100vh-4rem)] px-4 py-8">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">
-              Dashboard
+        {/* Main Card */}
+        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          {/* Title Row */}
+          <div className="mb-6 flex items-center justify-between">
+            <h1 className="text-2xl font-bold">
+              <span className="text-accent-teal">Liste des </span>
+              <span className="text-accent-red">Comptes</span>
             </h1>
-            <p className="mt-1 text-zinc-600 dark:text-zinc-400">
-              Bienvenue, {userName}
-            </p>
-          </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-              Structures
-            </p>
-            <p className="mt-2 text-3xl font-bold text-zinc-900 dark:text-white">
-              {isLoading ? "-" : structures.length}
-            </p>
-          </div>
-          <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-              Campagnes
-            </p>
-            <p className="mt-2 text-3xl font-bold text-zinc-900 dark:text-white">
-              {isLoading ? "-" : totalCampaigns}
-            </p>
-          </div>
-          <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-              Réponses collectées
-            </p>
-            <p className="mt-2 text-3xl font-bold text-zinc-900 dark:text-white">
-              {isLoading ? "-" : totalResponses}
-            </p>
-          </div>
-          <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-              Taux de complétion
-            </p>
-            <p className="mt-2 text-3xl font-bold text-zinc-900 dark:text-white">
-              -
-            </p>
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="mb-8">
-          <h2 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-white">
-            Actions rapides
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <button
               onClick={() => setIsStructureDialogOpen(true)}
-              className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white p-4 text-left transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              className="flex items-center gap-2 rounded-lg border-2 border-accent-green bg-accent-green-light px-4 py-2.5 text-sm font-semibold text-accent-green transition-colors hover:bg-green-100"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  className="h-5 w-5"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M12 4.5v15m7.5-7.5h-15"
-                  />
-                </svg>
-              </div>
-              <div>
-                <p className="font-medium text-zinc-900 dark:text-white">
-                  Nouvelle structure
-                </p>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                  Créer une institution
-                </p>
-              </div>
-            </button>
-
-            <button
-              onClick={() => setIsCampaignDialogOpen(true)}
-              className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white p-4 text-left transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  className="h-5 w-5"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M12 4.5v15m7.5-7.5h-15"
-                  />
-                </svg>
-              </div>
-              <div>
-                <p className="font-medium text-zinc-900 dark:text-white">
-                  Nouvelle campagne
-                </p>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                  Créer un questionnaire
-                </p>
-              </div>
-            </button>
-
-            <button
-              className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white p-4 text-left transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-              disabled
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  className="h-5 w-5"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"
-                  />
-                </svg>
-              </div>
-              <div>
-                <p className="font-medium text-zinc-900 dark:text-white">
-                  Voir les résultats
-                </p>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                  Analyser les réponses
-                </p>
-              </div>
-            </button>
-          </div>
-        </div>
-
-        {/* Structures List */}
-        <div className="mb-8">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-zinc-900 dark:text-white">
-              Structures
-            </h2>
-            <button
-              onClick={() => setIsStructureDialogOpen(true)}
-              className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100"
-            >
-              + Ajouter
+              Créer un compte
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                className="h-4 w-4"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+                />
+              </svg>
             </button>
           </div>
 
+          {/* Structures Table */}
           {isLoading ? (
-            <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-              <p className="text-sm text-zinc-500">Chargement...</p>
+            <div className="py-12 text-center">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-border border-t-accent-teal" />
+              <p className="mt-3 text-sm text-text-muted">Chargement...</p>
             </div>
           ) : structures.length === 0 ? (
-            <div className="rounded-xl border border-zinc-200 bg-white p-6 text-center dark:border-zinc-800 dark:bg-zinc-900">
-              <p className="text-zinc-600 dark:text-zinc-400">
-                Aucune structure créée.
-              </p>
+            <div className="rounded-lg border border-border bg-background p-8 text-center">
+              <p className="text-text-muted">Aucune structure créée.</p>
               <button
                 onClick={() => setIsStructureDialogOpen(true)}
-                className="mt-2 text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
+                className="mt-3 text-sm font-medium text-accent-teal hover:underline"
               >
                 Créer votre première structure
               </button>
             </div>
           ) : (
-            <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="overflow-hidden rounded-lg border border-border">
               <table className="w-full">
-                <thead className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-800/50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                      Nom
+                <thead>
+                  <tr className="border-b border-border bg-gray-50">
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">
+                      Ouvrir
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">
+                      Compte
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-text-muted">
                       Email référent
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                      Campagnes
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                      Réponses
+                    <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-text-muted">
+                      Nombre de réponses total
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                <tbody className="divide-y divide-border">
                   {structures.map((structure) => (
                     <tr
                       key={structure.id}
-                      className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                      className="transition-colors hover:bg-gray-50"
                     >
-                      <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-zinc-900 dark:text-white">
+                      <td className="whitespace-nowrap px-6 py-4">
+                        <Link
+                          href={`/dashboard/${structure.id}`}
+                          className="inline-flex items-center text-text-muted hover:text-primary transition-colors"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.5}
+                            stroke="currentColor"
+                            className="h-5 w-5"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"
+                            />
+                          </svg>
+                        </Link>
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-foreground">
                         {structure.name}
                       </td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">
+                      <td className="whitespace-nowrap px-6 py-4 text-center text-sm text-text-muted">
                         {structure.referentEmail}
                       </td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">
-                        {structure._count.campaigns}
-                      </td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">
+                      <td className="whitespace-nowrap px-6 py-4 text-center text-sm text-text-muted">
                         {structure._count.savedSurveys}
                       </td>
                     </tr>
@@ -307,78 +194,123 @@ export function DashboardClient({ userName }: DashboardClientProps) {
           )}
         </div>
 
-        {/* Recent Activity */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        {/* Recent Surveys Section */}
+        {surveys.length > 0 && (
+          <div className="mt-6 rounded-xl border border-border bg-card p-6 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
-                Campagnes récentes
+              <h2 className="text-lg font-bold">
+                <span className="text-accent-teal">Enquêtes </span>
+                <span className="text-accent-red">récentes</span>
               </h2>
               <button
-                onClick={() => setIsCampaignDialogOpen(true)}
-                className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
+                onClick={() => setIsSurveyDialogOpen(true)}
+                className="flex items-center gap-2 rounded-lg border-2 border-accent-green bg-accent-green-light px-4 py-2 text-sm font-semibold text-accent-green transition-colors hover:bg-green-100"
               >
-                + Nouvelle
+                Créer une enquête
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  className="h-4 w-4"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 4.5v15m7.5-7.5h-15"
+                  />
+                </svg>
               </button>
             </div>
-            {campaigns.length === 0 ? (
-              <p className="text-sm text-zinc-500 dark:text-zinc-500">
-                Aucune campagne créée.
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {campaigns.slice(0, 5).map((campaign) => (
-                  <div
-                    key={campaign.id}
-                    className="flex items-center justify-between rounded-lg border border-zinc-100 p-3 dark:border-zinc-800"
-                  >
-                    <div>
-                      <p className="font-medium text-zinc-900 dark:text-white">
-                        {campaign.name}
-                      </p>
-                      <p className="text-xs text-zinc-500">
-                        {campaign.structure.name} •{" "}
-                        {campaign.surveyType === "AIRE_ET_MOTS"
-                          ? "AIRE & MOTS"
-                          : campaign.surveyType}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <span
-                        className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${
-                          campaign.status === "EN_COURS"
-                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                            : campaign.status === "FERMEE"
-                              ? "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400"
-                              : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                        }`}
-                      >
-                        {campaign.status === "EN_COURS"
-                          ? "En cours"
-                          : campaign.status === "FERMEE"
-                            ? "Fermée"
-                            : "Expirée"}
-                      </span>
-                      <p className="mt-1 text-xs text-zinc-500">
-                        {campaign._count.savedSurveys}
-                        {campaign.maxResponses
-                          ? ` / ${campaign.maxResponses}`
-                          : ""}{" "}
-                        réponses
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
 
-          <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-white">
-              Activité récente
-            </h2>
-            <p className="text-sm text-zinc-500 dark:text-zinc-500">
-              L&apos;activité récente apparaîtra ici.
+            <div className="overflow-hidden rounded-lg border border-border">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border bg-gray-50">
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">
+                      Nom
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-muted">
+                      Structure
+                    </th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-text-muted">
+                      Type
+                    </th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-text-muted">
+                      Réponses
+                    </th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-text-muted">
+                      Statut
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {surveys.slice(0, 5).map((survey) => (
+                    <tr
+                      key={survey.id}
+                      className="transition-colors hover:bg-gray-50"
+                    >
+                      <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-foreground">
+                        {survey.name}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-sm text-text-muted">
+                        {survey.structure.name}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-center text-sm text-text-muted">
+                        {survey.surveyType === "AIRE_ET_MOTS"
+                          ? "AIRE & MOTS"
+                          : survey.surveyType}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-center text-sm text-text-muted">
+                        {survey._count.savedSurveys}
+                        {survey.maxResponses ? ` / ${survey.maxResponses}` : ""}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-center">
+                        <span
+                          className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${
+                            survey.status === "EN_COURS"
+                              ? "border border-green-300 bg-green-50 text-accent-green"
+                              : survey.status === "FERMEE"
+                                ? "border border-gray-300 bg-gray-50 text-text-muted"
+                                : "border border-red-300 bg-red-50 text-accent-red"
+                          }`}
+                        >
+                          {survey.status === "EN_COURS"
+                            ? "En cours"
+                            : survey.status === "FERMEE"
+                              ? "Fermée"
+                              : "Expirée"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Stats row */}
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+            <p className="text-sm font-medium text-text-muted">Structures</p>
+            <p className="mt-1 text-2xl font-bold text-primary">
+              {isLoading ? "–" : structures.length}
+            </p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+            <p className="text-sm font-medium text-text-muted">Enquêtes</p>
+            <p className="mt-1 text-2xl font-bold text-primary">
+              {isLoading ? "–" : surveys.length}
+            </p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+            <p className="text-sm font-medium text-text-muted">
+              Réponses collectées
+            </p>
+            <p className="mt-1 text-2xl font-bold text-primary">
+              {isLoading ? "–" : totalResponses}
             </p>
           </div>
         </div>
@@ -389,15 +321,15 @@ export function DashboardClient({ userName }: DashboardClientProps) {
         onClose={() => setIsStructureDialogOpen(false)}
         onSuccess={() => {
           fetchStructures();
-          fetchCampaigns();
+          fetchSurveys();
         }}
       />
 
-      <CreateCampaignDialog
-        open={isCampaignDialogOpen}
-        onClose={() => setIsCampaignDialogOpen(false)}
+      <CreateSurveyDialog
+        open={isSurveyDialogOpen}
+        onClose={() => setIsSurveyDialogOpen(false)}
         onSuccess={() => {
-          fetchCampaigns();
+          fetchSurveys();
           fetchStructures();
         }}
       />

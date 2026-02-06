@@ -36,19 +36,17 @@ export function Dialog({ open, onClose, title, children }: DialogProps) {
   return (
     <dialog
       ref={dialogRef}
-      className="w-full max-w-md rounded-xl border border-zinc-200 bg-white p-0 shadow-xl backdrop:bg-black/50 dark:border-zinc-700 dark:bg-zinc-900"
+      className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 m-0 w-full max-w-md rounded-xl border border-border bg-card p-0 shadow-xl backdrop:bg-black/40"
       onClick={(e) => {
         if (e.target === dialogRef.current) onClose();
       }}
     >
       <div className="p-6">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-zinc-900 dark:text-white">
-            {title}
-          </h2>
+          <h2 className="text-xl font-semibold text-primary">{title}</h2>
           <button
             onClick={onClose}
-            className="rounded-lg p-1 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+            className="rounded-lg p-1 text-text-muted hover:bg-gray-100 hover:text-foreground"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

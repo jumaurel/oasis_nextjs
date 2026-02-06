@@ -69,7 +69,7 @@ export function CreateStructureDialog({
   return (
     <Dialog open={open} onClose={handleClose} title="Nouvelle structure">
       {serverError && (
-        <div className="mb-4 rounded-lg bg-red-100 p-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-400">
+        <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-accent-red">
           {serverError}
         </div>
       )}
@@ -78,7 +78,7 @@ export function CreateStructureDialog({
         <div>
           <label
             htmlFor="name"
-            className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+            className="mb-1 block text-sm font-medium text-foreground"
           >
             Nom de la structure
           </label>
@@ -86,11 +86,11 @@ export function CreateStructureDialog({
             type="text"
             id="name"
             {...register("name")}
-            className="w-full rounded-lg border border-zinc-300 bg-white px-4 py-2 text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+            className="w-full rounded-lg border border-border bg-white px-4 py-2 text-foreground focus:border-accent-teal focus:outline-none focus:ring-2 focus:ring-accent-teal/20"
             placeholder="Ex: CHU de Lyon"
           />
           {errors.name && (
-            <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+            <p className="mt-1 text-sm text-accent-red">
               {errors.name.message}
             </p>
           )}
@@ -99,7 +99,7 @@ export function CreateStructureDialog({
         <div>
           <label
             htmlFor="referentEmail"
-            className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+            className="mb-1 block text-sm font-medium text-foreground"
           >
             Email du référent
           </label>
@@ -107,11 +107,11 @@ export function CreateStructureDialog({
             type="email"
             id="referentEmail"
             {...register("referentEmail")}
-            className="w-full rounded-lg border border-zinc-300 bg-white px-4 py-2 text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+            className="w-full rounded-lg border border-border bg-white px-4 py-2 text-foreground focus:border-accent-teal focus:outline-none focus:ring-2 focus:ring-accent-teal/20"
             placeholder="referent@structure.fr"
           />
           {errors.referentEmail && (
-            <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+            <p className="mt-1 text-sm text-accent-red">
               {errors.referentEmail.message}
             </p>
           )}
@@ -121,14 +121,14 @@ export function CreateStructureDialog({
           <button
             type="button"
             onClick={handleClose}
-            className="flex-1 rounded-lg border border-zinc-300 px-4 py-2 font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="flex-1 rounded-lg border border-border px-4 py-2 font-medium text-text-muted transition-colors hover:bg-gray-50"
           >
             Annuler
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex-1 rounded-lg bg-zinc-900 px-4 py-2 font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-50 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100"
+            className="flex-1 rounded-lg bg-primary px-4 py-2 font-medium text-white transition-colors hover:bg-primary-light disabled:opacity-50"
           >
             {isSubmitting ? "Création..." : "Créer"}
           </button>

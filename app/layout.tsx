@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "OASIS - Plateforme de questionnaires santé",
-  description: "Plateforme de questionnaires pour les institutions de santé",
+  title: "MOTS OASIS - Plateforme de questionnaires santé",
+  description: "Plateforme de questionnaires pour les professionnels de santé",
 };
 
 export default function RootLayout({
