@@ -111,6 +111,7 @@ model SavedSurvey {
   genre         String
   region        String
   specialite    String
+  typePratique  String   @default("")
   datePassation DateTime @default(now())
   reponses      Json
 

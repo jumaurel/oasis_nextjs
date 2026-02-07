@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs:*)",
+      "Bash(ls:*)",
+      "Bash(pnpm build:*)",
+      "Bash(npx next build:*)",
+      "WebSearch",
+      "WebFetch(domain:coss.com)",
+      "Bash(pnpm dlx:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: migrate UI to coss.com/ui component library\n\nReplace all custom UI elements \\(native dialog, HTML buttons, div-based cards,\nHTML tables, CSS spinners\\) with coss.com/ui components \\(shadcn registry + Base UI\\).\nAdd AlertDialog for delete confirmations, Switch for status toggles, Badge for\nstatuses, Toast for copy feedback. Map custom healthcare theme to shadcn CSS variables.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(pnpm add:*)"
+    ]
+  }
+}

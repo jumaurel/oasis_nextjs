@@ -1,8 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { Card, CardHeader, CardTitle, CardPanel } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Card, CardPanel } from "@/components/ui/card";
+import { QuestionnaireClient } from "./questionnaire-client";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -106,66 +105,13 @@ export default async function QuestionnairePage({ params }: Props) {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] px-4 py-8">
-      <div className="mx-auto max-w-3xl">
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>{survey.name}</CardTitle>
-          </CardHeader>
-          <CardPanel>
-            <p className="mb-4 text-muted-foreground">
-              {survey.structure.name} — Type :{" "}
-              {survey.surveyType === "AIRE_ET_MOTS"
-                ? "AIRE & MOTS"
-                : survey.surveyType}
-            </p>
-            <div className="rounded-lg bg-blue-50 border border-blue-200 p-4 text-sm text-blue-800">
-              Le contenu du questionnaire sera implémenté ultérieurement.
-            </div>
-          </CardPanel>
-        </Card>
-
-        {/* Placeholder pour le formulaire de questionnaire */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Informations du répondant</CardTitle>
-          </CardHeader>
-          <CardPanel>
-            <form className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label>Âge</Label>
-                  <Input type="number" placeholder="Votre âge" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Genre</Label>
-                  <select className="flex h-9 w-full rounded-lg border border-input bg-background px-3 text-base text-foreground shadow-xs/5 outline-none ring-ring/24 transition-shadow focus-visible:border-ring focus-visible:ring-[3px] disabled:opacity-64 sm:h-8 sm:text-sm">
-                    <option value="">Sélectionner</option>
-                    <option value="homme">Homme</option>
-                    <option value="femme">Femme</option>
-                    <option value="autre">Autre</option>
-                    <option value="non-specifie">Ne souhaite pas préciser</option>
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Région</Label>
-                  <Input type="text" placeholder="Votre région" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Spécialité</Label>
-                  <Input type="text" placeholder="Votre spécialité" />
-                </div>
-              </div>
-
-              <div className="pt-4">
-                <p className="text-center text-sm text-muted-foreground">
-                  Les questions du questionnaire seront affichées ici.
-                </p>
-              </div>
-            </form>
-          </CardPanel>
-        </Card>
-      </div>
-    </div>
+    <QuestionnaireClient
+      survey={{
+        id: survey.id,
+        name: survey.name,
+        surveyType: survey.surveyType,
+        structureName: survey.structure.name,
+      }}
+    />
   );
 }
