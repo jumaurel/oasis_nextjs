@@ -67,9 +67,9 @@ export function EditSurveyDialog({
   const [isTogglingStatus, setIsTogglingStatus] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [serverError, setServerError] = useState("");
+  const [localStatus, setLocalStatus] = useState(survey.status);
 
-  const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
   const publicLink = `${appUrl}/${survey.id}`;
 
   const {
@@ -101,6 +101,7 @@ export function EditSurveyDialog({
           .split("T")[0],
         maxResponses: survey.maxResponses,
       });
+      setLocalStatus(survey.status);
       setServerError("");
     }
   }, [open, survey, reset]);
@@ -139,7 +140,7 @@ export function EditSurveyDialog({
     setIsTogglingStatus(true);
     setServerError("");
 
-    const newStatus = survey.status === "EN_COURS" ? "FERMEE" : "EN_COURS";
+    const newStatus = localStatus === "EN_COURS" ? "FERMEE" : "EN_COURS";
 
     try {
       const response = await fetch(`/api/surveys/${survey.id}`, {
@@ -164,8 +165,8 @@ export function EditSurveyDialog({
         );
       }
 
+      setLocalStatus(newStatus);
       onSuccess();
-      onClose();
     } catch (error) {
       setServerError(
         error instanceof Error ? error.message : "Une erreur est survenue",
@@ -229,17 +230,19 @@ export function EditSurveyDialog({
     onClose();
   };
 
-  const statusBadgeVariant = survey.status === "EN_COURS"
-    ? "success" as const
-    : survey.status === "FERMEE"
-      ? "secondary" as const
-      : "destructive" as const;
+  const statusBadgeVariant =
+    localStatus === "EN_COURS"
+      ? ("success" as const)
+      : localStatus === "FERMEE"
+        ? ("secondary" as const)
+        : ("destructive" as const);
 
-  const statusLabel = survey.status === "EN_COURS"
-    ? "En cours"
-    : survey.status === "FERMEE"
-      ? "Fermée"
-      : "Expirée";
+  const statusLabel =
+    localStatus === "EN_COURS"
+      ? "En cours"
+      : localStatus === "FERMEE"
+        ? "Fermée"
+        : "Expirée";
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
@@ -289,17 +292,22 @@ export function EditSurveyDialog({
           {/* Status toggle section */}
           <div className="mb-4 flex items-center justify-between rounded-lg border border-border bg-background p-3">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-foreground">Statut :</span>
+              <span className="text-sm font-medium text-foreground">
+                Statut :
+              </span>
               <Badge variant={statusBadgeVariant}>{statusLabel}</Badge>
             </div>
-            {survey.status !== "EXPIREE" && (
+            {localStatus !== "EXPIREE" && (
               <div className="flex items-center gap-2">
-                <Label htmlFor="status-switch" className="text-sm text-muted-foreground">
-                  {survey.status === "EN_COURS" ? "Active" : "Inactive"}
+                <Label
+                  htmlFor="status-switch"
+                  className="text-sm text-muted-foreground"
+                >
+                  {localStatus === "EN_COURS" ? "Active" : "Inactive"}
                 </Label>
                 <Switch
                   id="status-switch"
-                  checked={survey.status === "EN_COURS"}
+                  checked={localStatus === "EN_COURS"}
                   onCheckedChange={handleToggleStatus}
                   disabled={isTogglingStatus}
                 />
@@ -313,7 +321,9 @@ export function EditSurveyDialog({
               Supprimer cette enquête
             </span>
             <AlertDialog>
-              <AlertDialogTrigger render={<Button variant="destructive-outline" size="sm" />}>
+              <AlertDialogTrigger
+                render={<Button variant="destructive-outline" size="sm" />}
+              >
                 {isDeleting && <Spinner />}
                 {isDeleting ? "Suppression..." : "Supprimer"}
               </AlertDialogTrigger>
@@ -321,7 +331,8 @@ export function EditSurveyDialog({
                 <AlertDialogHeader>
                   <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Êtes-vous sûr de vouloir supprimer cette enquête ? Cette action est irréversible.
+                    Êtes-vous sûr de vouloir supprimer cette enquête ? Cette
+                    action est irréversible.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -329,7 +340,9 @@ export function EditSurveyDialog({
                     Annuler
                   </AlertDialogClose>
                   <AlertDialogClose
-                    render={<Button variant="destructive" onClick={handleDelete} />}
+                    render={
+                      <Button variant="destructive" onClick={handleDelete} />
+                    }
                   >
                     Supprimer
                   </AlertDialogClose>
@@ -342,11 +355,7 @@ export function EditSurveyDialog({
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="edit-survey-name">Nom de l&apos;enquête</Label>
-              <Input
-                type="text"
-                id="edit-survey-name"
-                {...register("name")}
-              />
+              <Input type="text" id="edit-survey-name" {...register("name")} />
               {errors.name && (
                 <p className="text-sm text-destructive">
                   {errors.name.message}
@@ -390,7 +399,9 @@ export function EditSurveyDialog({
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="edit-survey-expirationDate">Date d&apos;expiration</Label>
+                <Label htmlFor="edit-survey-expirationDate">
+                  Date d&apos;expiration
+                </Label>
                 <Input
                   type="date"
                   id="edit-survey-expirationDate"
@@ -426,7 +437,9 @@ export function EditSurveyDialog({
             </div>
 
             <div className="flex gap-3 pt-2">
-              <DialogClose render={<Button variant="outline" className="flex-1" />}>
+              <DialogClose
+                render={<Button variant="outline" className="flex-1" />}
+              >
                 Annuler
               </DialogClose>
               <Button type="submit" disabled={isSubmitting} className="flex-1">

@@ -4,7 +4,13 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { CreateStructureDialog } from "@/components/structures/create-structure-dialog";
 import { CreateSurveyDialog } from "@/components/surveys/create-survey-dialog";
-import { Card, CardHeader, CardTitle, CardAction, CardPanel } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardAction,
+  CardPanel,
+} from "@/components/ui/card";
 import {
   Table,
   TableHeader,
@@ -98,6 +104,39 @@ export function DashboardClient({ userName }: DashboardClientProps) {
   return (
     <div className="min-h-[calc(100vh-4rem)] px-4 py-8">
       <div className="mx-auto max-w-7xl">
+        {/* Stats row */}
+        <div className="my-6 grid gap-4 sm:grid-cols-3">
+          <Card>
+            <CardPanel>
+              <p className="text-sm font-medium text-muted-foreground">
+                Structures
+              </p>
+              <p className="mt-1 text-2xl font-bold text-primary">
+                {isLoading ? "–" : structures.length}
+              </p>
+            </CardPanel>
+          </Card>
+          <Card>
+            <CardPanel>
+              <p className="text-sm font-medium text-muted-foreground">
+                Enquêtes
+              </p>
+              <p className="mt-1 text-2xl font-bold text-primary">
+                {isLoading ? "–" : surveys.length}
+              </p>
+            </CardPanel>
+          </Card>
+          <Card>
+            <CardPanel>
+              <p className="text-sm font-medium text-muted-foreground">
+                Réponses collectées
+              </p>
+              <p className="mt-1 text-2xl font-bold text-primary">
+                {isLoading ? "–" : totalResponses}
+              </p>
+            </CardPanel>
+          </Card>
+        </div>
         {/* Main Card */}
         <Card>
           <CardHeader>
@@ -135,7 +174,9 @@ export function DashboardClient({ userName }: DashboardClientProps) {
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <Spinner className="size-8 text-accent-teal" />
-                <p className="mt-3 text-sm text-muted-foreground">Chargement...</p>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  Chargement...
+                </p>
               </div>
             ) : structures.length === 0 ? (
               <div className="rounded-lg border border-border bg-background p-8 text-center">
@@ -152,8 +193,12 @@ export function DashboardClient({ userName }: DashboardClientProps) {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Compte</TableHead>
-                    <TableHead className="text-center">Email référent</TableHead>
-                    <TableHead className="text-center">Nombre de réponses total</TableHead>
+                    <TableHead className="text-center">
+                      Email référent
+                    </TableHead>
+                    <TableHead className="text-center">
+                      Nombre de réponses total
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -179,122 +224,6 @@ export function DashboardClient({ userName }: DashboardClientProps) {
             )}
           </CardPanel>
         </Card>
-
-        {/* Recent Surveys Section */}
-        {surveys.length > 0 && (
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>
-                <span className="text-accent-teal">Enquêtes </span>
-                <span className="text-accent-red">récentes</span>
-              </CardTitle>
-              <CardAction>
-                <Button
-                  variant="outline"
-                  className="border-2 border-accent-green bg-accent-green-light text-accent-green hover:bg-green-100"
-                  onClick={() => setIsSurveyDialogOpen(true)}
-                >
-                  Créer une enquête
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2}
-                    stroke="currentColor"
-                    className="h-4 w-4"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 4.5v15m7.5-7.5h-15"
-                    />
-                  </svg>
-                </Button>
-              </CardAction>
-            </CardHeader>
-            <CardPanel>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nom</TableHead>
-                    <TableHead>Structure</TableHead>
-                    <TableHead className="text-center">Type</TableHead>
-                    <TableHead className="text-center">Réponses</TableHead>
-                    <TableHead className="text-center">Statut</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {surveys.slice(0, 5).map((survey) => (
-                    <TableRow key={survey.id}>
-                      <TableCell className="font-medium">
-                        {survey.name}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {survey.structure.name}
-                      </TableCell>
-                      <TableCell className="text-center text-muted-foreground">
-                        {survey.surveyType === "AIRE_ET_MOTS"
-                          ? "AIRE & MOTS"
-                          : survey.surveyType}
-                      </TableCell>
-                      <TableCell className="text-center text-muted-foreground">
-                        {survey._count.savedSurveys}
-                        {survey.maxResponses ? ` / ${survey.maxResponses}` : ""}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge
-                          variant={
-                            survey.status === "EN_COURS"
-                              ? "success"
-                              : survey.status === "FERMEE"
-                                ? "secondary"
-                                : "destructive"
-                          }
-                        >
-                          {survey.status === "EN_COURS"
-                            ? "En cours"
-                            : survey.status === "FERMEE"
-                              ? "Fermée"
-                              : "Expirée"}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardPanel>
-          </Card>
-        )}
-
-        {/* Stats row */}
-        <div className="mt-6 grid gap-4 sm:grid-cols-3">
-          <Card>
-            <CardPanel>
-              <p className="text-sm font-medium text-muted-foreground">Structures</p>
-              <p className="mt-1 text-2xl font-bold text-primary">
-                {isLoading ? "–" : structures.length}
-              </p>
-            </CardPanel>
-          </Card>
-          <Card>
-            <CardPanel>
-              <p className="text-sm font-medium text-muted-foreground">Enquêtes</p>
-              <p className="mt-1 text-2xl font-bold text-primary">
-                {isLoading ? "–" : surveys.length}
-              </p>
-            </CardPanel>
-          </Card>
-          <Card>
-            <CardPanel>
-              <p className="text-sm font-medium text-muted-foreground">
-                Réponses collectées
-              </p>
-              <p className="mt-1 text-2xl font-bold text-primary">
-                {isLoading ? "–" : totalResponses}
-              </p>
-            </CardPanel>
-          </Card>
-        </div>
       </div>
 
       <CreateStructureDialog
