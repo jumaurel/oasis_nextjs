@@ -3,7 +3,18 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Dialog } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogHeader,
+  DialogPanel,
+  DialogPopup,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
 import {
   createSurveySchema,
   surveyTypes,
@@ -19,6 +30,7 @@ interface CreateSurveyDialogProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  structureId?: string;
 }
 
 const surveyTypeLabels: Record<(typeof surveyTypes)[number], string> = {
@@ -31,6 +43,7 @@ export function CreateSurveyDialog({
   open,
   onClose,
   onSuccess,
+  structureId,
 }: CreateSurveyDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState("");
@@ -46,14 +59,15 @@ export function CreateSurveyDialog({
     resolver: zodResolver(createSurveySchema),
     defaultValues: {
       maxResponses: null,
+      ...(structureId ? { structureId } : {}),
     },
   });
 
   useEffect(() => {
-    if (open) {
+    if (open && !structureId) {
       fetchStructures();
     }
-  }, [open]);
+  }, [open, structureId]);
 
   const fetchStructures = async () => {
     setIsLoadingStructures(true);
@@ -115,185 +129,161 @@ export function CreateSurveyDialog({
     .split("T")[0];
 
   return (
-    <Dialog open={open} onClose={handleClose} title="Nouvelle enquête">
-      {serverError && (
-        <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-accent-red">
-          {serverError}
-        </div>
-      )}
-
-      {structures.length === 0 && !isLoadingStructures ? (
-        <div className="rounded-lg bg-accent-orange-light border border-amber-300 p-4 text-sm text-amber-800">
-          Vous devez d&apos;abord créer une structure avant de pouvoir créer une
-          enquête.
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <label
-              htmlFor="structureId"
-              className="mb-1 block text-sm font-medium text-foreground"
-            >
-              Structure
-            </label>
-            <select
-              id="structureId"
-              {...register("structureId")}
-              className="w-full rounded-lg border border-border bg-white px-4 py-2 text-foreground focus:border-accent-teal focus:outline-none focus:ring-2 focus:ring-accent-teal/20"
-              disabled={isLoadingStructures}
-            >
-              <option value="">
-                {isLoadingStructures
-                  ? "Chargement..."
-                  : "Sélectionner une structure"}
-              </option>
-              {structures.map((structure) => (
-                <option key={structure.id} value={structure.id}>
-                  {structure.name}
-                </option>
-              ))}
-            </select>
-            {errors.structureId && (
-              <p className="mt-1 text-sm text-accent-red">
-                {errors.structureId.message}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label
-              htmlFor="name"
-              className="mb-1 block text-sm font-medium text-foreground"
-            >
-              Nom de l&apos;enquête
-            </label>
-            <input
-              type="text"
-              id="name"
-              {...register("name")}
-              className="w-full rounded-lg border border-border bg-white px-4 py-2 text-foreground focus:border-accent-teal focus:outline-none focus:ring-2 focus:ring-accent-teal/20"
-              placeholder="Ex: Enquête du 16/09/2024"
-            />
-            {errors.name && (
-              <p className="mt-1 text-sm text-accent-red">
-                {errors.name.message}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label
-              htmlFor="surveyType"
-              className="mb-1 block text-sm font-medium text-foreground"
-            >
-              Type de questionnaire
-            </label>
-            <select
-              id="surveyType"
-              {...register("surveyType")}
-              className="w-full rounded-lg border border-border bg-white px-4 py-2 text-foreground focus:border-accent-teal focus:outline-none focus:ring-2 focus:ring-accent-teal/20"
-            >
-              <option value="">Sélectionner un type</option>
-              {surveyTypes.map((type) => (
-                <option key={type} value={type}>
-                  {surveyTypeLabels[type]}
-                </option>
-              ))}
-            </select>
-            {errors.surveyType && (
-              <p className="mt-1 text-sm text-accent-red">
-                {errors.surveyType.message}
-              </p>
-            )}
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label
-                htmlFor="startDate"
-                className="mb-1 block text-sm font-medium text-foreground"
-              >
-                Date de démarrage
-              </label>
-              <input
-                type="date"
-                id="startDate"
-                {...register("startDate")}
-                defaultValue={today}
-                className="w-full rounded-lg border border-border bg-white px-4 py-2 text-foreground focus:border-accent-teal focus:outline-none focus:ring-2 focus:ring-accent-teal/20"
-              />
-              {errors.startDate && (
-                <p className="mt-1 text-sm text-accent-red">
-                  {errors.startDate.message}
-                </p>
-              )}
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
+      <DialogPopup>
+        <DialogHeader>
+          <DialogTitle>Nouvelle enquête</DialogTitle>
+        </DialogHeader>
+        <DialogPanel>
+          {serverError && (
+            <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-destructive">
+              {serverError}
             </div>
+          )}
 
-            <div>
-              <label
-                htmlFor="expirationDate"
-                className="mb-1 block text-sm font-medium text-foreground"
-              >
-                Date d&apos;expiration
-              </label>
-              <input
-                type="date"
-                id="expirationDate"
-                {...register("expirationDate")}
-                defaultValue={defaultExpiration}
-                className="w-full rounded-lg border border-border bg-white px-4 py-2 text-foreground focus:border-accent-teal focus:outline-none focus:ring-2 focus:ring-accent-teal/20"
-              />
-              {errors.expirationDate && (
-                <p className="mt-1 text-sm text-accent-red">
-                  {errors.expirationDate.message}
-                </p>
-              )}
+          {structures.length === 0 && !isLoadingStructures && !structureId ? (
+            <div className="rounded-lg bg-accent-orange-light border border-amber-300 p-4 text-sm text-amber-800">
+              Vous devez d&apos;abord créer une structure avant de pouvoir créer une
+              enquête.
             </div>
-          </div>
+          ) : (
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              {structureId ? (
+                <input type="hidden" {...register("structureId")} value={structureId} />
+              ) : (
+                <div className="space-y-1.5">
+                  <Label htmlFor="structureId">Structure</Label>
+                  <select
+                    id="structureId"
+                    {...register("structureId")}
+                    className="flex h-9 w-full rounded-lg border border-input bg-background px-3 text-base text-foreground shadow-xs/5 outline-none ring-ring/24 transition-shadow focus-visible:border-ring focus-visible:ring-[3px] disabled:opacity-64 sm:h-8 sm:text-sm"
+                    disabled={isLoadingStructures}
+                  >
+                    <option value="">
+                      {isLoadingStructures
+                        ? "Chargement..."
+                        : "Sélectionner une structure"}
+                    </option>
+                    {structures.map((structure) => (
+                      <option key={structure.id} value={structure.id}>
+                        {structure.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.structureId && (
+                    <p className="text-sm text-destructive">
+                      {errors.structureId.message}
+                    </p>
+                  )}
+                </div>
+              )}
 
-          <div>
-            <label
-              htmlFor="maxResponses"
-              className="mb-1 block text-sm font-medium text-foreground"
-            >
-              Nombre maximum de réponses{" "}
-              <span className="text-text-muted">(optionnel)</span>
-            </label>
-            <input
-              type="number"
-              id="maxResponses"
-              {...register("maxResponses", {
-                setValueAs: (v) => (v === "" ? null : parseInt(v, 10)),
-              })}
-              className="w-full rounded-lg border border-border bg-white px-4 py-2 text-foreground focus:border-accent-teal focus:outline-none focus:ring-2 focus:ring-accent-teal/20"
-              placeholder="Illimité si vide"
-              min="1"
-            />
-            {errors.maxResponses && (
-              <p className="mt-1 text-sm text-accent-red">
-                {errors.maxResponses.message}
-              </p>
-            )}
-          </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="name">Nom de l&apos;enquête</Label>
+                <Input
+                  type="text"
+                  id="name"
+                  {...register("name")}
+                  placeholder="Ex: Enquête du 16/09/2024"
+                />
+                {errors.name && (
+                  <p className="text-sm text-destructive">
+                    {errors.name.message}
+                  </p>
+                )}
+              </div>
 
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="flex-1 rounded-lg border border-border px-4 py-2 font-medium text-text-muted transition-colors hover:bg-gray-50"
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting || isLoadingStructures}
-              className="flex-1 rounded-lg bg-primary px-4 py-2 font-medium text-white transition-colors hover:bg-primary-light disabled:opacity-50"
-            >
-              {isSubmitting ? "Création..." : "Créer"}
-            </button>
-          </div>
-        </form>
-      )}
+              <div className="space-y-1.5">
+                <Label htmlFor="surveyType">Type de questionnaire</Label>
+                <select
+                  id="surveyType"
+                  {...register("surveyType")}
+                  className="flex h-9 w-full rounded-lg border border-input bg-background px-3 text-base text-foreground shadow-xs/5 outline-none ring-ring/24 transition-shadow focus-visible:border-ring focus-visible:ring-[3px] disabled:opacity-64 sm:h-8 sm:text-sm"
+                >
+                  <option value="">Sélectionner un type</option>
+                  {surveyTypes.map((type) => (
+                    <option key={type} value={type}>
+                      {surveyTypeLabels[type]}
+                    </option>
+                  ))}
+                </select>
+                {errors.surveyType && (
+                  <p className="text-sm text-destructive">
+                    {errors.surveyType.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="startDate">Date de démarrage</Label>
+                  <Input
+                    type="date"
+                    id="startDate"
+                    {...register("startDate")}
+                    defaultValue={today}
+                  />
+                  {errors.startDate && (
+                    <p className="text-sm text-destructive">
+                      {errors.startDate.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="expirationDate">Date d&apos;expiration</Label>
+                  <Input
+                    type="date"
+                    id="expirationDate"
+                    {...register("expirationDate")}
+                    defaultValue={defaultExpiration}
+                  />
+                  {errors.expirationDate && (
+                    <p className="text-sm text-destructive">
+                      {errors.expirationDate.message}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="maxResponses">
+                  Nombre maximum de réponses{" "}
+                  <span className="text-muted-foreground">(optionnel)</span>
+                </Label>
+                <Input
+                  type="number"
+                  id="maxResponses"
+                  {...register("maxResponses", {
+                    setValueAs: (v) => (v === "" ? null : parseInt(v, 10)),
+                  })}
+                  placeholder="Illimité si vide"
+                  min={1}
+                />
+                {errors.maxResponses && (
+                  <p className="text-sm text-destructive">
+                    {errors.maxResponses.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <DialogClose render={<Button variant="outline" className="flex-1" />}>
+                  Annuler
+                </DialogClose>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting || (!structureId && isLoadingStructures)}
+                  className="flex-1"
+                >
+                  {isSubmitting && <Spinner />}
+                  {isSubmitting ? "Création..." : "Créer"}
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogPanel>
+      </DialogPopup>
     </Dialog>
   );
 }

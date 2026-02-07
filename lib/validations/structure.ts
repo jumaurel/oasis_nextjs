@@ -9,3 +9,7 @@ export const createStructureSchema = z.object({
 });
 
 export type CreateStructureInput = z.infer<typeof createStructureSchema>;
+
+export const updateStructureSchema = createStructureSchema;
+
+export type UpdateStructureInput = z.infer<typeof updateStructureSchema>;

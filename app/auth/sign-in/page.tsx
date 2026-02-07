@@ -4,6 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signIn } from "@/lib/auth-client";
+import { Card, CardHeader, CardTitle, CardPanel } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -38,71 +43,57 @@ export default function SignInPage() {
   return (
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4">
       <div className="w-full max-w-md">
-        <div className="rounded-xl border border-border bg-card p-8 shadow-sm">
-          <h1 className="mb-6 text-center text-2xl font-bold text-primary">
-            Connexion Admin
-          </h1>
+        <Card>
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">Connexion Admin</CardTitle>
+          </CardHeader>
+          <CardPanel>
+            {error && (
+              <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-destructive">
+                {error}
+              </div>
+            )}
 
-          {error && (
-            <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-accent-red">
-              {error}
-            </div>
-          )}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  type="email"
+                  id="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label
-                htmlFor="email"
-                className="mb-1 block text-sm font-medium text-foreground"
+              <div className="space-y-1.5">
+                <Label htmlFor="password">Mot de passe</Label>
+                <Input
+                  type="password"
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+
+              <Button type="submit" disabled={loading} className="w-full">
+                {loading && <Spinner />}
+                {loading ? "Connexion..." : "Se connecter"}
+              </Button>
+            </form>
+
+            <p className="mt-4 text-center text-sm text-muted-foreground">
+              Pas encore de compte ?{" "}
+              <Link
+                href="/auth/sign-up"
+                className="font-medium text-accent-teal hover:underline"
               >
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border border-border bg-white px-4 py-2 text-foreground focus:border-accent-teal focus:outline-none focus:ring-2 focus:ring-accent-teal/20"
-                required
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="password"
-                className="mb-1 block text-sm font-medium text-foreground"
-              >
-                Mot de passe
-              </label>
-              <input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg border border-border bg-white px-4 py-2 text-foreground focus:border-accent-teal focus:outline-none focus:ring-2 focus:ring-accent-teal/20"
-                required
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-lg bg-primary px-4 py-2 font-medium text-white transition-colors hover:bg-primary-light disabled:opacity-50"
-            >
-              {loading ? "Connexion..." : "Se connecter"}
-            </button>
-          </form>
-
-          <p className="mt-4 text-center text-sm text-text-muted">
-            Pas encore de compte ?{" "}
-            <Link
-              href="/auth/sign-up"
-              className="font-medium text-accent-teal hover:underline"
-            >
-              Créer un compte
-            </Link>
-          </p>
-        </div>
+                Créer un compte
+              </Link>
+            </p>
+          </CardPanel>
+        </Card>
       </div>
     </div>
   );

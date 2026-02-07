@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -16,21 +16,27 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import {
-  createStructureSchema,
-  type CreateStructureInput,
+  updateStructureSchema,
+  type UpdateStructureInput,
 } from "@/lib/validations/structure";
 
-interface CreateStructureDialogProps {
+interface EditStructureDialogProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  structure: {
+    id: string;
+    name: string;
+    referentEmail: string;
+  };
 }
 
-export function CreateStructureDialog({
+export function EditStructureDialog({
   open,
   onClose,
   onSuccess,
-}: CreateStructureDialogProps) {
+  structure,
+}: EditStructureDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState("");
 
@@ -39,27 +45,39 @@ export function CreateStructureDialog({
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<CreateStructureInput>({
-    resolver: zodResolver(createStructureSchema),
+  } = useForm<UpdateStructureInput>({
+    resolver: zodResolver(updateStructureSchema),
+    defaultValues: {
+      name: structure.name,
+      referentEmail: structure.referentEmail,
+    },
   });
 
-  const onSubmit = async (data: CreateStructureInput) => {
+  useEffect(() => {
+    if (open) {
+      reset({
+        name: structure.name,
+        referentEmail: structure.referentEmail,
+      });
+    }
+  }, [open, structure, reset]);
+
+  const onSubmit = async (data: UpdateStructureInput) => {
     setIsSubmitting(true);
     setServerError("");
 
     try {
-      const response = await fetch("/api/structures", {
-        method: "POST",
+      const response = await fetch(`/api/structures/${structure.id}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Erreur lors de la création");
+        throw new Error(errorData.error || "Erreur lors de la mise à jour");
       }
 
-      reset();
       onSuccess();
       onClose();
     } catch (error) {
@@ -81,7 +99,7 @@ export function CreateStructureDialog({
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
       <DialogPopup>
         <DialogHeader>
-          <DialogTitle>Nouvelle structure</DialogTitle>
+          <DialogTitle>Modifier la structure</DialogTitle>
         </DialogHeader>
         <DialogPanel>
           {serverError && (
@@ -92,10 +110,10 @@ export function CreateStructureDialog({
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="name">Nom de la structure</Label>
+              <Label htmlFor="edit-name">Nom de la structure</Label>
               <Input
                 type="text"
-                id="name"
+                id="edit-name"
                 {...register("name")}
                 placeholder="Ex: CHU de Lyon"
               />
@@ -107,10 +125,10 @@ export function CreateStructureDialog({
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="referentEmail">Email du référent</Label>
+              <Label htmlFor="edit-referentEmail">Email du référent</Label>
               <Input
                 type="email"
-                id="referentEmail"
+                id="edit-referentEmail"
                 {...register("referentEmail")}
                 placeholder="referent@structure.fr"
               />
@@ -127,7 +145,7 @@ export function CreateStructureDialog({
               </DialogClose>
               <Button type="submit" disabled={isSubmitting} className="flex-1">
                 {isSubmitting && <Spinner />}
-                {isSubmitting ? "Création..." : "Créer"}
+                {isSubmitting ? "Enregistrement..." : "Enregistrer"}
               </Button>
             </div>
           </form>

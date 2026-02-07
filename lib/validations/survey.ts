@@ -36,3 +36,42 @@ export const createSurveySchema = z
   );
 
 export type CreateSurveyInput = z.infer<typeof createSurveySchema>;
+
+export const updateSurveySchema = z
+  .object({
+    name: z
+      .string()
+      .min(2, "Le nom doit contenir au moins 2 caractères")
+      .max(100, "Le nom ne peut pas dépasser 100 caractères"),
+    startDate: z.string().min(1, "Veuillez sélectionner une date de démarrage"),
+    expirationDate: z
+      .string()
+      .min(1, "Veuillez sélectionner une date d'expiration"),
+    maxResponses: z
+      .number()
+      .int()
+      .positive("Le nombre doit être positif")
+      .optional()
+      .nullable(),
+    surveyType: z.enum(surveyTypes, {
+      message: "Veuillez sélectionner un type de questionnaire",
+    }),
+    status: z
+      .enum(["EN_COURS", "FERMEE"], {
+        message: "Statut invalide",
+      })
+      .optional(),
+  })
+  .refine(
+    (data) => {
+      const start = new Date(data.startDate);
+      const end = new Date(data.expirationDate);
+      return end > start;
+    },
+    {
+      message: "La date d'expiration doit être après la date de démarrage",
+      path: ["expirationDate"],
+    },
+  );
+
+export type UpdateSurveyInput = z.infer<typeof updateSurveySchema>;

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useSession, signOut } from "@/lib/auth-client";
+import { Button } from "@/components/ui/button";
 
 export function Header() {
   const { data: session, isPending } = useSession();
@@ -35,10 +36,7 @@ export function Header() {
           {isPending ? (
             <div className="h-10 w-24 animate-pulse rounded-lg bg-gray-200" />
           ) : session ? (
-            <button
-              onClick={() => signOut()}
-              className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-text-muted transition-colors hover:bg-gray-100 hover:text-primary"
-            >
+            <Button variant="ghost" onClick={() => signOut()}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -54,14 +52,11 @@ export function Header() {
                 />
               </svg>
               Quitter
-            </button>
+            </Button>
           ) : (
-            <Link
-              href="/auth/sign-in"
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-light"
-            >
+            <Button render={<Link href="/auth/sign-in" />}>
               Connexion Admin
-            </Link>
+            </Button>
           )}
         </nav>
       </div>
