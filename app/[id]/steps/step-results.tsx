@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
+import { toBlob } from "html-to-image";
 import { ResponsiveRadar } from "@nivo/radar";
 import type { PointData } from "@nivo/radar";
 import {
@@ -68,6 +69,15 @@ export function StepResults({
     defaultValues: { email: "", fullname: "" },
   });
 
+  // Utility to convert blob to base64
+  const blobToBase64 = (blob: Blob): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+
   const onSubmitEmail = async (formData: {
     email: string;
     fullname: string;
@@ -77,6 +87,39 @@ export function StepResults({
     setEmailError("");
 
     try {
+      // Capture chart SVGs as base64 images
+      const stetauscopeSvgNode = document.querySelector(
+        "#stetauscopeChart svg",
+      ) as HTMLElement | null;
+      const aireSvgNode = document.querySelector(
+        "#AIREChart svg",
+      ) as HTMLElement | null;
+
+      let stetauscopeBase64: string | undefined;
+      let aireBase64: string | undefined;
+
+      if (stetauscopeSvgNode) {
+        const blob = await toBlob(stetauscopeSvgNode, {
+          canvasWidth: 615 / window.devicePixelRatio,
+          canvasHeight: 500 / window.devicePixelRatio,
+          backgroundColor: "#fff",
+        });
+        if (blob) {
+          stetauscopeBase64 = await blobToBase64(blob);
+        }
+      }
+
+      if (aireSvgNode) {
+        const blob = await toBlob(aireSvgNode, {
+          canvasWidth: 600 / window.devicePixelRatio,
+          canvasHeight: 450 / window.devicePixelRatio,
+          backgroundColor: "#fff",
+        });
+        if (blob) {
+          aireBase64 = await blobToBase64(blob);
+        }
+      }
+
       const res = await fetch("/api/send-results-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -87,6 +130,8 @@ export function StepResults({
           aireData,
           recomSport,
           isAddiction,
+          stetauscopeGraph: stetauscopeBase64,
+          aireGraph: aireBase64,
         }),
       });
 
@@ -389,7 +434,10 @@ function ResultsCharts({
           facteur de risque potentiel à considérer.
         </p>
 
-        <div className="mx-auto h-125 w-full max-w-153.75">
+        <div
+          id="stetauscopeChart"
+          className="mx-auto h-125 w-full max-w-153.75"
+        >
           <ResponsiveRadar
             data={stetauscopeData}
             keys={["Score"]}
@@ -451,7 +499,7 @@ function ResultsCharts({
             (forme carrée) représente un rapport équilibré à son travail.
           </p>
 
-          <div className="mx-auto h-100 w-full max-w-137.5">
+          <div id="AIREChart" className="mx-auto h-100 w-full max-w-137.5">
             <ResponsiveRadar
               data={aireData}
               keys={["Score"]}
