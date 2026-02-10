@@ -69,6 +69,17 @@ export function StepResults({
     defaultValues: { email: "", fullname: "" },
   });
 
+  // Read plain data (questions + answers) from localStorage
+  const plainData = useMemo(() => {
+    try {
+      const raw = localStorage.getItem(`surveyPlainData_${surveyId}`);
+      if (raw) return JSON.parse(raw) as { name: string; title: string; displayValue: string; isNode?: boolean }[];
+    } catch {
+      // Ignore
+    }
+    return [];
+  }, [surveyId]);
+
   // Utility to convert blob to base64
   const blobToBase64 = (blob: Blob): Promise<string> =>
     new Promise((resolve, reject) => {
@@ -132,6 +143,7 @@ export function StepResults({
           isAddiction,
           stetauscopeGraph: stetauscopeBase64,
           aireGraph: aireBase64,
+          plainData,
         }),
       });
 
@@ -179,14 +191,12 @@ export function StepResults({
   // Vérification des recommandations et addiction
   const recomSport = useMemo(() => {
     if (!responses) return false;
-    const r = responses as Record<string, number>;
-    return r.D1_6 === 5;
+    return Number(responses.D1_6) === 5;
   }, [responses]);
 
   const isAddiction = useMemo(() => {
     if (!responses) return false;
-    const r = responses as Record<string, number>;
-    return r.D2_5 >= 4 || r.D2_7 >= 4;
+    return Number(responses.D2_5) >= 4 || Number(responses.D2_7) >= 4;
   }, [responses]);
 
   // Effacer les données du navigateur
@@ -274,6 +284,86 @@ export function StepResults({
             {/* Section résultats dépliable */}
             <Collapsible open={displayResults}>
               <CollapsiblePanel>
+                {/* Section envoi par email */}
+                <div className="rounded-xl border p-4 sm:p-6 space-y-4">
+                  <h3 className="text-base font-semibold">
+                    Recevoir les résultats par email
+                  </h3>
+
+                  {emailStatus === "success" ? (
+                    <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+                      <CheckCircle className="size-5 shrink-0" />
+                      <span>
+                        Email envoyé avec succès ! Vérifiez votre boîte de
+                        réception.
+                      </span>
+                    </div>
+                  ) : (
+                    <form
+                      onSubmit={handleSubmit(onSubmitEmail)}
+                      className="space-y-4"
+                    >
+                      <p className="text-sm text-muted-foreground text-justify">
+                        Si vous le souhaitez, vous pouvez entrer votre adresse
+                        email ci-après afin de recevoir un récapitulatif de vos
+                        résultats. À noter que ces réponses sont des données
+                        personnelles et de santé et ne doivent en aucun cas être
+                        communiquées à un tiers. Veillez à renseigner votre{" "}
+                        <strong>email privé</strong> sécurisé.
+                      </p>
+
+                      <div className="flex items-center gap-2">
+                        <Mail className="size-5 shrink-0 text-muted-foreground" />
+                        <input
+                          type="email"
+                          placeholder="Email"
+                          required
+                          className="w-full max-w-100 rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                          {...register("email", { required: true })}
+                        />
+                      </div>
+
+                      <p className="text-sm text-muted-foreground text-justify">
+                        Vous pouvez également entrer vos noms et prénoms afin de
+                        personnaliser l&apos;email de résultats.
+                      </p>
+
+                      <div className="flex items-center gap-2">
+                        <User className="size-5 shrink-0 text-muted-foreground" />
+                        <input
+                          type="text"
+                          placeholder="Nom et prénom (optionnel)"
+                          className="w-full max-w-100 rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                          {...register("fullname")}
+                        />
+                      </div>
+
+                      {emailStatus === "error" && (
+                        <p className="text-sm text-destructive">{emailError}</p>
+                      )}
+
+                      <div className="flex justify-center pt-2">
+                        <Button
+                          type="submit"
+                          disabled={emailStatus === "sending"}
+                          className="gap-2"
+                        >
+                          {emailStatus === "sending" ? (
+                            <>
+                              <Spinner className="size-4" />
+                              Envoi en cours…
+                            </>
+                          ) : (
+                            <>
+                              <Send className="size-4" />
+                              Envoyer par email
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </form>
+                  )}
+                </div>
                 <ResultsCharts
                   stetauscopeData={stetauscopeData}
                   aireData={aireData}
@@ -287,87 +377,6 @@ export function StepResults({
                 />
               </CollapsiblePanel>
             </Collapsible>
-
-            {/* Section envoi par email */}
-            <div className="rounded-xl border p-4 sm:p-6 space-y-4">
-              <h3 className="text-base font-semibold">
-                Recevoir les résultats par email
-              </h3>
-
-              {emailStatus === "success" ? (
-                <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">
-                  <CheckCircle className="size-5 shrink-0" />
-                  <span>
-                    Email envoyé avec succès ! Vérifiez votre boîte de
-                    réception.
-                  </span>
-                </div>
-              ) : (
-                <form
-                  onSubmit={handleSubmit(onSubmitEmail)}
-                  className="space-y-4"
-                >
-                  <p className="text-sm text-muted-foreground text-justify">
-                    Si vous le souhaitez, vous pouvez entrer votre adresse email
-                    ci-après afin de recevoir un récapitulatif de vos résultats.
-                    À noter que ces réponses sont des données personnelles et de
-                    santé et ne doivent en aucun cas être communiquées à un
-                    tiers. Veillez à renseigner votre{" "}
-                    <strong>email privé</strong> sécurisé.
-                  </p>
-
-                  <div className="flex items-center gap-2">
-                    <Mail className="size-5 shrink-0 text-muted-foreground" />
-                    <input
-                      type="email"
-                      placeholder="Email"
-                      required
-                      className="w-full max-w-100 rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                      {...register("email", { required: true })}
-                    />
-                  </div>
-
-                  <p className="text-sm text-muted-foreground text-justify">
-                    Vous pouvez également entrer vos noms et prénoms afin de
-                    personnaliser l&apos;email de résultats.
-                  </p>
-
-                  <div className="flex items-center gap-2">
-                    <User className="size-5 shrink-0 text-muted-foreground" />
-                    <input
-                      type="text"
-                      placeholder="Nom et prénom (optionnel)"
-                      className="w-full max-w-100 rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                      {...register("fullname")}
-                    />
-                  </div>
-
-                  {emailStatus === "error" && (
-                    <p className="text-sm text-destructive">{emailError}</p>
-                  )}
-
-                  <div className="flex justify-center pt-2">
-                    <Button
-                      type="submit"
-                      disabled={emailStatus === "sending"}
-                      className="gap-2"
-                    >
-                      {emailStatus === "sending" ? (
-                        <>
-                          <Spinner className="size-4" />
-                          Envoi en cours…
-                        </>
-                      ) : (
-                        <>
-                          <Send className="size-4" />
-                          Envoyer par email
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </form>
-              )}
-            </div>
 
             <p className="text-center text-sm italic text-muted-foreground">
               Pour rappel, aucun résultat individuel ne peut être transmis par

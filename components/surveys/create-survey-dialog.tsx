@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
+import { toastManager } from "@/components/ui/toast";
 import {
   createSurveySchema,
   surveyTypes,
@@ -34,8 +35,6 @@ interface CreateSurveyDialogProps {
 }
 
 const surveyTypeLabels: Record<(typeof surveyTypes)[number], string> = {
-  AIRE: "AIRE",
-  MOTS: "MOTS",
   AIRE_ET_MOTS: "AIRE & MOTS",
 };
 
@@ -58,7 +57,6 @@ export function CreateSurveyDialog({
   } = useForm<CreateSurveyInput>({
     resolver: zodResolver(createSurveySchema),
     defaultValues: {
-      maxResponses: null,
       ...(structureId ? { structureId } : {}),
     },
   });
@@ -92,10 +90,7 @@ export function CreateSurveyDialog({
       const response = await fetch("/api/surveys", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...data,
-          maxResponses: data.maxResponses || null,
-        }),
+        body: JSON.stringify(data),
       });
 
       if (!response.ok) {
@@ -106,10 +101,20 @@ export function CreateSurveyDialog({
       reset();
       onSuccess();
       onClose();
+      toastManager.add({
+        title: "Enquête créée",
+        description: "L'enquête a été créée avec succès.",
+        type: "success",
+      });
     } catch (error) {
-      setServerError(
-        error instanceof Error ? error.message : "Une erreur est survenue",
-      );
+      const message =
+        error instanceof Error ? error.message : "Une erreur est survenue";
+      setServerError(message);
+      toastManager.add({
+        title: "Erreur",
+        description: message,
+        type: "error",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -132,7 +137,7 @@ export function CreateSurveyDialog({
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
       <DialogPopup>
         <DialogHeader>
-          <DialogTitle>Nouvelle enquête</DialogTitle>
+          <DialogTitle>Création d&apos;une enquête</DialogTitle>
         </DialogHeader>
         <DialogPanel>
           {serverError && (
@@ -143,13 +148,17 @@ export function CreateSurveyDialog({
 
           {structures.length === 0 && !isLoadingStructures && !structureId ? (
             <div className="rounded-lg bg-accent-orange-light border border-amber-300 p-4 text-sm text-amber-800">
-              Vous devez d&apos;abord créer une structure avant de pouvoir créer une
-              enquête.
+              Vous devez d&apos;abord créer une structure avant de pouvoir créer
+              une enquête.
             </div>
           ) : (
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               {structureId ? (
-                <input type="hidden" {...register("structureId")} value={structureId} />
+                <input
+                  type="hidden"
+                  {...register("structureId")}
+                  value={structureId}
+                />
               ) : (
                 <div className="space-y-1.5">
                   <Label htmlFor="structureId">Structure</Label>
@@ -247,17 +256,14 @@ export function CreateSurveyDialog({
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="maxResponses">
-                  Nombre maximum de réponses{" "}
-                  <span className="text-muted-foreground">(optionnel)</span>
-                </Label>
+                <Label htmlFor="maxResponses">Nombre maximum de réponses</Label>
                 <Input
                   type="number"
                   id="maxResponses"
                   {...register("maxResponses", {
-                    setValueAs: (v) => (v === "" ? null : parseInt(v, 10)),
+                    setValueAs: (v) => (v === "" ? undefined : parseInt(v, 10)),
                   })}
-                  placeholder="Illimité si vide"
+                  placeholder="Ex: 50"
                   min={1}
                 />
                 {errors.maxResponses && (
@@ -268,12 +274,16 @@ export function CreateSurveyDialog({
               </div>
 
               <div className="flex gap-3 pt-2">
-                <DialogClose render={<Button variant="outline" className="flex-1" />}>
+                <DialogClose
+                  render={<Button variant="outline" className="flex-1" />}
+                >
                   Annuler
                 </DialogClose>
                 <Button
                   type="submit"
-                  disabled={isSubmitting || (!structureId && isLoadingStructures)}
+                  disabled={
+                    isSubmitting || (!structureId && isLoadingStructures)
+                  }
                   className="flex-1"
                 >
                   {isSubmitting && <Spinner />}

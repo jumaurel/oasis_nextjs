@@ -96,6 +96,8 @@ model Survey {
   maxResponses   Int?
   status         SurveyStatus   @default(EN_COURS)
   surveyType     SurveyType
+  viewCount      Int            @default(0)
+  startedCount   Int            @default(0)
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 

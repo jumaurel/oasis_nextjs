@@ -2,6 +2,13 @@
 import PDFDocument from "pdfkit";
 import { LOGO_OASIS_BASE64, AIRE_EXAMPLES_BASE64 } from "./images";
 
+export interface PlainDataItem {
+  name: string;
+  title: string;
+  displayValue: string;
+  isNode?: boolean;
+}
+
 export interface PdfData {
   stetauscopeData: { subject: string; Score: number }[];
   aireData: { subject: string; Score: number }[];
@@ -10,20 +17,28 @@ export interface PdfData {
   fullname?: string;
   stetauscopeGraph?: string; // base64 data URI
   aireGraph?: string; // base64 data URI
+  plainData?: PlainDataItem[]; // full question/answer data from SurveyJS
 }
 
-function getDotColorLabel(
-  value: number,
-  subject: string,
-  isAddiction: boolean,
-): string {
-  if (subject === "Santé perçue" && isAddiction) return "Risque élevé";
-  if (value <= 15) return "Très favorable";
-  if (value <= 30) return "Favorable";
-  if (value <= 45) return "Modéré";
-  if (value <= 65) return "Défavorable";
-  return "Risque élevé";
-}
+// Mapping dimension prefix → domain label (must match scoring.ts)
+const domainName: Record<string, string> = {
+  D1: "Ma santé",
+  D2: "Santé perçue",
+  D3: "Avenir pro.",
+  D4: "Se préserver",
+  D5: "Pression temp.",
+  D6: "Equilibre émo.",
+  D7: "Gestion des RDV",
+  D8: "Activité clinique",
+  D9: "Act. administrative",
+  D10: "Formation pro.",
+  D11: "Gestion des conflits",
+  D12: "Tensions pro.",
+  D13: "Coopération",
+  D14: "Conflits valeurs",
+  D15: "Soutien social",
+  D16: "Qualité de vie",
+};
 
 /** Convert a data URI (data:image/...;base64,...) to a Buffer */
 function dataUriToBuffer(dataUri: string): Buffer {
@@ -78,41 +93,56 @@ function drawSimpleTable(
   colWidths: number[],
 ) {
   const startX = PAGE_MARGIN;
+  const tableWidth = colWidths.reduce((a, b) => a + b, 0);
+  const rowPadding = 4;
   let y = doc.y;
-  const rowHeight = 18;
 
   // Header row
   doc.font("Helvetica-Bold").fontSize(TABLE_FONT_SIZE);
+  let maxH = 0;
   headers.forEach((h, i) => {
     const x = startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0);
+    const h2 = doc.heightOfString(h, { width: colWidths[i] });
+    if (h2 > maxH) maxH = h2;
     doc.text(h, x, y, { width: colWidths[i], align: "left" });
   });
 
-  y += rowHeight;
+  y += maxH + rowPadding;
   doc
     .moveTo(startX, y)
-    .lineTo(startX + colWidths.reduce((a, b) => a + b, 0), y)
+    .lineTo(startX + tableWidth, y)
     .lineWidth(0.5)
     .stroke();
-  y += 4;
+  y += rowPadding;
 
   // Data rows
   doc.font("Helvetica").fontSize(TABLE_FONT_SIZE);
   for (const row of rows) {
+    // Measure the height needed for every cell in this row
+    let rowH = 0;
+    for (let i = 0; i < row.length; i++) {
+      const cellH = doc.heightOfString(row[i], { width: colWidths[i] });
+      if (cellH > rowH) rowH = cellH;
+    }
+
     // Check page overflow
-    if (y + rowHeight > doc.page.height - PAGE_MARGIN) {
+    if (y + rowH + rowPadding > doc.page.height - PAGE_MARGIN) {
       doc.addPage();
       y = PAGE_MARGIN;
     }
+
+    // Draw each cell at the same y, so multi-line text doesn't shift columns
     row.forEach((cell, i) => {
       const x = startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0);
       doc.text(cell, x, y, { width: colWidths[i], align: "left" });
     });
-    y += rowHeight;
-    // Light line
+
+    y += rowH + rowPadding;
+
+    // Light separator line
     doc
       .moveTo(startX, y - 2)
-      .lineTo(startX + colWidths.reduce((a, b) => a + b, 0), y - 2)
+      .lineTo(startX + tableWidth, y - 2)
       .lineWidth(0.25)
       .strokeColor("#cccccc")
       .stroke();
@@ -230,16 +260,15 @@ export function buildResultsPdf(
     doc,
     "Une situation de souffrance au travail se traduit par un déséquilibre et/ou une intensité trop forte ou trop faible entre ces 4 dimensions. La modélisation sur 4 axes aide à percevoir aisément les deux aspects : un rapport équilibré au travail se traduit par un carré globalement régulier et de superficie moyenne.",
   );
-  doc.moveDown(0.3);
+  doc.moveDown(0.2);
   addBoldBody(doc, "• Vos résultats :");
-  doc.moveDown(0.5);
 
   // AIRE graph
   if (data.aireGraph) {
     const graphBuffer = dataUriToBuffer(data.aireGraph);
     const imgX = PAGE_MARGIN + (USABLE_WIDTH - 280) / 2;
     doc.image(graphBuffer, imgX, doc.y, { width: 280, height: 200 });
-    doc.y += 210;
+    doc.y += 200;
   }
 
   addBoldBody(doc, "• Interprétation des résultats :");
@@ -248,11 +277,9 @@ export function buildResultsPdf(
     "- Un rapport équilibré au travail se traduit par un carré globalement régulier et de superficie moyenne\n- Un surinvestissement peut se traduire par une figure régulière mais de superficie beaucoup plus étendue, à l'inverse un sous-investissement se traduira par une figure globalement régulière mais très petite.\n- Le burnout peut se manifester par une figure de forme très irrégulière, avec des Attentes très élevées, des Renforcements faibles, et un Investissement et un sentiment d'Efficacité plus ou moins conservé.",
   );
 
+  doc.moveDown(0.2);
   // AIRE examples image
   const examplesBuffer = dataUriToBuffer(AIRE_EXAMPLES_BASE64);
-  if (doc.y + 300 > doc.page.height - PAGE_MARGIN) {
-    doc.addPage();
-  }
   doc.image(examplesBuffer, PAGE_MARGIN, doc.y, { width: USABLE_WIDTH });
   doc.y += 260;
 
@@ -294,40 +321,52 @@ export function buildResultsPdf(
     .font("Helvetica-Bold")
     .fontSize(BODY_FONT_SIZE)
     .text("L'équipe médicale MOTS", { align: "right" });
-  doc.moveDown(1);
+  doc.moveDown(3);
 
   // ══════════════════════════════════════════════════════════
   // 4. ANNEXE
   // ══════════════════════════════════════════════════════════
   addTitle(doc, "4. Annexe : Résumé des questions et réponses données");
 
+  // Build Stet'auscope and AIRE rows from plainData (individual questions)
+  const stetauscopeRows: string[][] = [];
+  const aireRows: string[][] = [];
+
+  if (data.plainData && data.plainData.length > 0) {
+    for (const item of data.plainData) {
+      if (!item.isNode || !item.displayValue) continue;
+
+      if (item.name.startsWith("D")) {
+        const match = item.name.match(/^D\d+/);
+        if (match) {
+          const domain = domainName[match[0]];
+          if (domain) {
+            stetauscopeRows.push([domain, item.title, item.displayValue]);
+          }
+        }
+      } else if (item.name.startsWith("AIRE")) {
+        aireRows.push([item.title, item.displayValue]);
+      }
+    }
+  }
+
   addBoldBody(doc, "Questionnaire Stet'auscope");
-  doc.moveDown(0.3);
-
-  const stetauscopeRows = data.stetauscopeData.map((item) => [
-    item.subject,
-    String(item.Score),
-    getDotColorLabel(item.Score, item.subject, data.isAddiction),
-  ]);
-  drawSimpleTable(doc, ["Domaine", "Score", "Niveau"], stetauscopeRows, [
-    USABLE_WIDTH * 0.4,
-    USABLE_WIDTH * 0.2,
-    USABLE_WIDTH * 0.4,
-  ]);
-
   doc.moveDown(0.5);
-  addBoldBody(doc, "Questionnaire AIRE");
-  doc.moveDown(0.3);
 
-  const aireRows = data.aireData.map((item) => [
-    item.subject,
-    String(item.Score),
-    "9",
+  drawSimpleTable(doc, ["Domaine", "Question", "Réponse"], stetauscopeRows, [
+    USABLE_WIDTH * 0.15,
+    USABLE_WIDTH * 0.6,
+    USABLE_WIDTH * 0.25,
   ]);
-  drawSimpleTable(doc, ["Dimension", "Score", "Max"], aireRows, [
-    USABLE_WIDTH * 0.5,
-    USABLE_WIDTH * 0.25,
-    USABLE_WIDTH * 0.25,
+
+  doc.x = PAGE_MARGIN;
+  doc.moveDown(2);
+  addBoldBody(doc, "Questionnaire AIRE");
+  doc.moveDown(0.5);
+
+  drawSimpleTable(doc, ["Question", "Réponse"], aireRows, [
+    USABLE_WIDTH * (1 / 4),
+    USABLE_WIDTH * (3 / 4),
   ]);
 
   return doc;

@@ -2,10 +2,11 @@ import { z } from "zod";
 
 export const demographicsSchema = z.object({
   age: z
-    .number({ message: "L'âge est requis" })
-    .int("L'âge doit être un nombre entier")
-    .min(18, "Vous devez avoir au moins 18 ans")
-    .max(120, "Veuillez entrer un âge valide"),
+    .number({ message: "Veuillez sélectionner votre tranche d'âge" })
+    .int()
+    .refine((v) => [20, 30, 40, 50, 60, 70].includes(v), {
+      message: "Veuillez sélectionner votre tranche d'âge",
+    }),
   genre: z.string().min(1, "Veuillez sélectionner un genre"),
   region: z.string().min(1, "Veuillez sélectionner votre région"),
   specialite: z.string().min(1, "Veuillez sélectionner votre spécialité"),
@@ -17,7 +18,10 @@ export const demographicsSchema = z.object({
 export type DemographicsInput = z.infer<typeof demographicsSchema>;
 
 export const responseSchema = z.object({
-  age: z.number().int().min(18).max(120),
+  age: z
+    .number()
+    .int()
+    .refine((v) => [20, 30, 40, 50, 60, 70].includes(v)),
   genre: z.string().min(1),
   region: z.string().min(1),
   specialite: z.string().min(1),

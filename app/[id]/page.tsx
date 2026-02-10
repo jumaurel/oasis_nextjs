@@ -49,6 +49,14 @@ export default async function QuestionnairePage({ params }: Props) {
     notFound();
   }
 
+  // Incrémenter le compteur de vues (fire-and-forget)
+  prisma.survey
+    .update({
+      where: { id },
+      data: { viewCount: { increment: 1 } },
+    })
+    .catch(() => {});
+
   // Vérifier si l'enquête est active
   const now = new Date();
   const isExpired = survey.expirationDate < now;
@@ -94,8 +102,8 @@ export default async function QuestionnairePage({ params }: Props) {
                 Questionnaire à venir
               </h1>
               <p className="text-muted-foreground">
-                Ce questionnaire n&apos;est pas encore ouvert. Il sera disponible
-                le {survey.startDate.toLocaleDateString("fr-FR")}.
+                Ce questionnaire n&apos;est pas encore ouvert. Il sera
+                disponible le {survey.startDate.toLocaleDateString("fr-FR")}.
               </p>
             </CardPanel>
           </Card>

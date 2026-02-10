@@ -193,7 +193,7 @@ export const initialAIREData: AIREDataItem[] = [
 ];
 
 // Mapping dimension → label du graphe Stet'Auscope
-const dimensionToLabel: Record<string, string> = {
+export const dimensionToLabel: Record<string, string> = {
   D1: "Ma santé",
   D2: "Santé perçue",
   D3: "Avenir pro.",

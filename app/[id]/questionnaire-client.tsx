@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { StepConsent } from "./steps/step-consent";
 import { StepDemographics } from "./steps/step-demographics";
 import { StepQuestionnaire } from "./steps/step-questionnaire";
 import { StepResults } from "./steps/step-results";
+import { Spinner } from "@/components/ui/spinner";
 import type { DemographicsInput } from "@/lib/validations/demographics";
 
 interface SurveyData {
@@ -37,19 +38,25 @@ function getStorageKey(surveyId: string) {
 }
 
 export function QuestionnaireClient({ survey }: { survey: SurveyData }) {
-  const [progress, setProgress] = useState<SurveyProgress>(() => {
-    if (typeof window === "undefined") return defaultProgress;
+  const hasTrackedStart = useRef(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [progress, setProgress] = useState<SurveyProgress>(defaultProgress);
+
+  // Restore saved progress from localStorage on mount
+  useEffect(() => {
     try {
       const saved = localStorage.getItem(getStorageKey(survey.id));
       if (saved) {
         const parsed = JSON.parse(saved) as SurveyProgress;
-        if (!parsed.completedAt) return parsed;
+        if (!parsed.completedAt) {
+          setProgress(parsed);
+        }
       }
     } catch {
-      // Ignore les erreurs de parsing
+      // Ignore localStorage errors
     }
-    return defaultProgress;
-  });
+    setIsLoading(false);
+  }, [survey.id]);
 
   // Sauvegarder la progression dans localStorage à chaque changement
   const saveProgress = useCallback(
@@ -76,29 +83,43 @@ export function QuestionnaireClient({ survey }: { survey: SurveyData }) {
 
   const handleNext = useCallback(
     (data?: Partial<SurveyProgress>) => {
+      const newStep = Math.min(progress.currentStep + 1, 4);
+
+      // Tracker le démarrage du questionnaire (passage en step 2)
+      if (
+        progress.currentStep === 1 &&
+        newStep === 2 &&
+        !hasTrackedStart.current
+      ) {
+        hasTrackedStart.current = true;
+        fetch(`/api/surveys/${survey.id}/track`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ event: "start" }),
+        }).catch(() => {});
+      }
+
       const newProgress = {
         ...progress,
         ...data,
-        currentStep: Math.min(progress.currentStep + 1, 4),
+        currentStep: newStep,
       };
       saveProgress(newProgress);
     },
-    [progress, saveProgress],
+    [progress, saveProgress, survey.id],
   );
 
   const handlePrevious = useCallback(() => {
     goToStep(Math.max(progress.currentStep - 1, 1));
   }, [progress.currentStep, goToStep]);
 
-  const handleSubmitted = useCallback(() => {
-    const completed = { ...progress, completedAt: new Date().toISOString() };
-    try {
-      localStorage.removeItem(getStorageKey(survey.id));
-    } catch {
-      // Ignore
-    }
-    setProgress(completed);
-  }, [progress, survey.id]);
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
+        <Spinner className="size-8 text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[calc(100vh-4rem)] px-4 py-8">

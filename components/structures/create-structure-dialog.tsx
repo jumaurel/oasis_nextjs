@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
+import { toastManager } from "@/components/ui/toast";
 import {
   createStructureSchema,
   type CreateStructureInput,
@@ -62,10 +63,20 @@ export function CreateStructureDialog({
       reset();
       onSuccess();
       onClose();
+      toastManager.add({
+        title: "Structure créée",
+        description: "La structure a été créée avec succès.",
+        type: "success",
+      });
     } catch (error) {
-      setServerError(
-        error instanceof Error ? error.message : "Une erreur est survenue",
-      );
+      const message =
+        error instanceof Error ? error.message : "Une erreur est survenue";
+      setServerError(message);
+      toastManager.add({
+        title: "Erreur",
+        description: message,
+        type: "error",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -81,7 +92,7 @@ export function CreateStructureDialog({
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
       <DialogPopup>
         <DialogHeader>
-          <DialogTitle>Nouvelle structure</DialogTitle>
+          <DialogTitle>Créer un compte</DialogTitle>
         </DialogHeader>
         <DialogPanel>
           {serverError && (
@@ -92,7 +103,7 @@ export function CreateStructureDialog({
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="name">Nom de la structure</Label>
+              <Label htmlFor="name">Nom du compte</Label>
               <Input
                 type="text"
                 id="name"
@@ -107,7 +118,7 @@ export function CreateStructureDialog({
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="referentEmail">Email du référent</Label>
+              <Label htmlFor="referentEmail">Email référent.e</Label>
               <Input
                 type="email"
                 id="referentEmail"
@@ -122,7 +133,9 @@ export function CreateStructureDialog({
             </div>
 
             <div className="flex gap-3 pt-2">
-              <DialogClose render={<Button variant="outline" className="flex-1" />}>
+              <DialogClose
+                render={<Button variant="outline" className="flex-1" />}
+              >
                 Annuler
               </DialogClose>
               <Button type="submit" disabled={isSubmitting} className="flex-1">

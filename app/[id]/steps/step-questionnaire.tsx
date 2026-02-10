@@ -1,11 +1,39 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, createElement } from "react";
 import { Model } from "survey-core";
-import { Survey } from "survey-react-ui";
+import {
+  Survey,
+  ReactElementFactory,
+  ReactSurveyElement,
+} from "survey-react-ui";
 import "survey-core/survey-core.min.css";
 import "survey-core/i18n/french";
 import { Button } from "@/components/ui/button";
+
+// --- Custom percentage progress bar ---
+class PercentageProgressBar extends ReactSurveyElement {
+  render() {
+    return (
+      <div className="flex justify-center items-center my-4">
+        <div className="w-full mx-2 h-3 bg-gray-200 rounded-xl">
+          <div
+            className="h-full bg-green-600 rounded-xl transition-all duration-300"
+            style={{ width: `${this.props.model.progressValue}%` }}
+          />
+        </div>
+        <div className="font-bold text-gray-500 tabular-nums">
+          {this.props.model.progressValue}%
+        </div>
+      </div>
+    );
+  }
+}
+
+ReactElementFactory.Instance.registerElement(
+  "sv-progressbar-percentage",
+  (props) => createElement(PercentageProgressBar, props),
+);
 import { Card, CardPanel, CardFooter } from "@/components/ui/card";
 import {
   AlertDialog,
@@ -61,6 +89,9 @@ export function StepQuestionnaire({
 
     // Masquer la navigation interne de SurveyJS — on gère la complétion nous-mêmes
     model.showNavigationButtons = "none";
+    // Activer le calcul de progression (nécessaire pour progressValue)
+    model.showProgressBar = "off";
+    model.progressBarType = "questions";
 
     // Restaurer les réponses précédentes
     if (initialResponses) {

@@ -25,7 +25,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import { Spinner } from "@/components/ui/spinner";
 import { toastManager } from "@/components/ui/toast";
 import {
@@ -52,8 +51,6 @@ interface EditSurveyDialogProps {
 }
 
 const surveyTypeLabels: Record<(typeof surveyTypes)[number], string> = {
-  AIRE: "AIRE",
-  MOTS: "MOTS",
   AIRE_ET_MOTS: "AIRE & MOTS",
 };
 
@@ -86,7 +83,7 @@ export function EditSurveyDialog({
       expirationDate: new Date(survey.expirationDate)
         .toISOString()
         .split("T")[0],
-      maxResponses: survey.maxResponses,
+      maxResponses: survey.maxResponses ?? undefined,
     },
   });
 
@@ -99,7 +96,7 @@ export function EditSurveyDialog({
         expirationDate: new Date(survey.expirationDate)
           .toISOString()
           .split("T")[0],
-        maxResponses: survey.maxResponses,
+        maxResponses: survey.maxResponses ?? undefined,
       });
       setLocalStatus(survey.status);
       setServerError("");
@@ -114,10 +111,7 @@ export function EditSurveyDialog({
       const response = await fetch(`/api/surveys/${survey.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...data,
-          maxResponses: data.maxResponses || null,
-        }),
+        body: JSON.stringify(data),
       });
 
       if (!response.ok) {
@@ -164,6 +158,12 @@ export function EditSurveyDialog({
           errorData.error || "Erreur lors du changement de statut",
         );
       }
+
+      toastManager.add({
+        title: `Enquête ${newStatus === "EN_COURS" ? "activée" : "fermée"}`,
+        description: `L'enquête a été ${newStatus === "EN_COURS" ? "activée" : "fermée"} avec succès.`,
+        type: "success",
+      });
 
       setLocalStatus(newStatus);
       onSuccess();
@@ -234,21 +234,24 @@ export function EditSurveyDialog({
     localStatus === "EN_COURS"
       ? ("success" as const)
       : localStatus === "FERMEE"
-        ? ("secondary" as const)
-        : ("destructive" as const);
+        ? ("destructive" as const)
+        : ("secondary" as const);
 
   const statusLabel =
     localStatus === "EN_COURS"
-      ? "En cours"
+      ? "Enquête activée"
       : localStatus === "FERMEE"
-        ? "Fermée"
-        : "Expirée";
+        ? "Enquête fermée"
+        : "Enquête expirée";
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
       <DialogPopup>
         <DialogHeader>
-          <DialogTitle>Détail de l&apos;enquête</DialogTitle>
+          <DialogTitle>
+            Editer l&apos;enquête :{" "}
+            <span className="font-bold text-primary/80">{survey.name}</span>
+          </DialogTitle>
         </DialogHeader>
         <DialogPanel>
           {serverError && (
@@ -257,10 +260,46 @@ export function EditSurveyDialog({
             </div>
           )}
 
+          {/* Status toggle section */}
+          <div className="mb-4 flex items-center justify-between rounded-lg border border-border bg-background p-3">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-foreground">
+                Statut :
+              </span>
+              <Badge size="lg" variant={statusBadgeVariant}>
+                {statusLabel}
+              </Badge>
+            </div>
+            {localStatus !== "EXPIREE" && (
+              <div className="flex items-center gap-1.5">
+                <Button
+                  variant={localStatus === "EN_COURS" ? "default" : "outline"}
+                  size="sm"
+                  disabled={isTogglingStatus || localStatus === "EN_COURS"}
+                  onClick={handleToggleStatus}
+                >
+                  {isTogglingStatus && localStatus !== "EN_COURS" && (
+                    <Spinner />
+                  )}
+                  Activer
+                </Button>
+                <Button
+                  variant={localStatus === "FERMEE" ? "default" : "outline"}
+                  size="sm"
+                  disabled={isTogglingStatus || localStatus === "FERMEE"}
+                  onClick={handleToggleStatus}
+                >
+                  {isTogglingStatus && localStatus !== "FERMEE" && <Spinner />}
+                  Fermer
+                </Button>
+              </div>
+            )}
+          </div>
+
           {/* Public link section */}
           <div className="mb-4 rounded-lg border border-border bg-background p-3">
             <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Lien public
+              Lien public de l&apos;enquête
             </label>
             <div className="flex items-center gap-2">
               <Input
@@ -287,68 +326,6 @@ export function EditSurveyDialog({
                 Copier
               </Button>
             </div>
-          </div>
-
-          {/* Status toggle section */}
-          <div className="mb-4 flex items-center justify-between rounded-lg border border-border bg-background p-3">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-foreground">
-                Statut :
-              </span>
-              <Badge variant={statusBadgeVariant}>{statusLabel}</Badge>
-            </div>
-            {localStatus !== "EXPIREE" && (
-              <div className="flex items-center gap-2">
-                <Label
-                  htmlFor="status-switch"
-                  className="text-sm text-muted-foreground"
-                >
-                  {localStatus === "EN_COURS" ? "Active" : "Inactive"}
-                </Label>
-                <Switch
-                  id="status-switch"
-                  checked={localStatus === "EN_COURS"}
-                  onCheckedChange={handleToggleStatus}
-                  disabled={isTogglingStatus}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Delete section */}
-          <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 p-3">
-            <span className="text-sm font-medium text-destructive">
-              Supprimer cette enquête
-            </span>
-            <AlertDialog>
-              <AlertDialogTrigger
-                render={<Button variant="destructive-outline" size="sm" />}
-              >
-                {isDeleting && <Spinner />}
-                {isDeleting ? "Suppression..." : "Supprimer"}
-              </AlertDialogTrigger>
-              <AlertDialogPopup>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Êtes-vous sûr de vouloir supprimer cette enquête ? Cette
-                    action est irréversible.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogClose render={<Button variant="outline" />}>
-                    Annuler
-                  </AlertDialogClose>
-                  <AlertDialogClose
-                    render={
-                      <Button variant="destructive" onClick={handleDelete} />
-                    }
-                  >
-                    Supprimer
-                  </AlertDialogClose>
-                </AlertDialogFooter>
-              </AlertDialogPopup>
-            </AlertDialog>
           </div>
 
           {/* Edit form */}
@@ -417,16 +394,15 @@ export function EditSurveyDialog({
 
             <div className="space-y-1.5">
               <Label htmlFor="edit-survey-maxResponses">
-                Nombre maximum de réponses{" "}
-                <span className="text-muted-foreground">(optionnel)</span>
+                Nombre maximum de réponses
               </Label>
               <Input
                 type="number"
                 id="edit-survey-maxResponses"
                 {...register("maxResponses", {
-                  setValueAs: (v) => (v === "" ? null : parseInt(v, 10)),
+                  setValueAs: (v) => (v === "" ? undefined : parseInt(v, 10)),
                 })}
-                placeholder="Illimité si vide"
+                placeholder="Ex: 50"
                 min={1}
               />
               {errors.maxResponses && (
@@ -434,6 +410,46 @@ export function EditSurveyDialog({
                   {errors.maxResponses.message}
                 </p>
               )}
+            </div>
+
+            {/* Delete section */}
+            <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+              <span className="text-sm font-medium text-destructive">
+                Supprimer cette enquête
+              </span>
+              <AlertDialog>
+                <AlertDialogTrigger
+                  render={<Button variant="destructive-outline" size="sm" />}
+                >
+                  {isDeleting && <Spinner />}
+                  {isDeleting ? "Suppression..." : "Supprimer"}
+                </AlertDialogTrigger>
+                <AlertDialogPopup>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Confirmer la suppression ?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Êtes-vous sûr de vouloir supprimer cette enquête ? Cette
+                      action est irréversible. En revanche, les réponses
+                      anonymes associées à cette enquête seront conservées et
+                      accessibles dans les résultats.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogClose render={<Button variant="outline" />}>
+                      Annuler
+                    </AlertDialogClose>
+                    <AlertDialogClose
+                      render={
+                        <Button variant="destructive" onClick={handleDelete} />
+                      }
+                    >
+                      Supprimer
+                    </AlertDialogClose>
+                  </AlertDialogFooter>
+                </AlertDialogPopup>
+              </AlertDialog>
             </div>
 
             <div className="flex gap-3 pt-2">

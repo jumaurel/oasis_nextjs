@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const surveyTypes = ["AIRE", "MOTS", "AIRE_ET_MOTS"] as const;
+export const surveyTypes = ["AIRE_ET_MOTS"] as const;
 
 export const createSurveySchema = z
   .object({
@@ -14,11 +14,9 @@ export const createSurveySchema = z
       .string()
       .min(1, "Veuillez sélectionner une date d'expiration"),
     maxResponses: z
-      .number()
-      .int()
-      .positive("Le nombre doit être positif")
-      .optional()
-      .nullable(),
+      .number({ message: "Veuillez entrer un nombre de réponses" })
+      .int("Le nombre doit être un entier")
+      .positive("Le nombre doit être positif"),
     surveyType: z.enum(surveyTypes, {
       message: "Veuillez sélectionner un type de questionnaire",
     }),
@@ -48,11 +46,9 @@ export const updateSurveySchema = z
       .string()
       .min(1, "Veuillez sélectionner une date d'expiration"),
     maxResponses: z
-      .number()
-      .int()
-      .positive("Le nombre doit être positif")
-      .optional()
-      .nullable(),
+      .number({ message: "Veuillez entrer un nombre de réponses" })
+      .int("Le nombre doit être un entier")
+      .positive("Le nombre doit être positif"),
     surveyType: z.enum(surveyTypes, {
       message: "Veuillez sélectionner un type de questionnaire",
     }),

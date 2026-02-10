@@ -10,7 +10,6 @@ import {
   CardPanel,
   CardFooter,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   demographicsSchema,
@@ -35,7 +34,7 @@ export function StepDemographics({
   } = useForm<DemographicsInput>({
     resolver: zodResolver(demographicsSchema),
     defaultValues: initialData ?? {
-      age: undefined,
+      age: 0,
       genre: "",
       region: "",
       specialite: "",
@@ -68,13 +67,23 @@ export function StepDemographics({
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="age">Âge</Label>
-              <Input
+              <Label htmlFor="age">Tranche d&apos;âge</Label>
+              <select
                 id="age"
-                type="number"
-                placeholder="Votre âge"
+                className={selectClassName}
                 {...register("age", { valueAsNumber: true })}
-              />
+                defaultValue={0}
+              >
+                <option value={0} disabled>
+                  Sélectionnez votre tranche d&apos;âge
+                </option>
+                <option value={20}>20-29 ans</option>
+                <option value={30}>30-39 ans</option>
+                <option value={40}>40-49 ans</option>
+                <option value={50}>50-59 ans</option>
+                <option value={60}>60-69 ans</option>
+                <option value={70}>70 ans et plus</option>
+              </select>
               {errors.age && (
                 <p className="text-xs text-destructive">{errors.age.message}</p>
               )}

@@ -20,7 +20,18 @@ export async function GET(
       where: { id },
       include: {
         surveys: {
-          include: {
+          select: {
+            id: true,
+            name: true,
+            startDate: true,
+            expirationDate: true,
+            maxResponses: true,
+            status: true,
+            surveyType: true,
+            viewCount: true,
+            startedCount: true,
+            createdAt: true,
+            updatedAt: true,
             _count: {
               select: { savedSurveys: true },
             },
@@ -82,6 +93,53 @@ export async function PUT(
     console.error("Error updating structure:", error);
     return NextResponse.json(
       { error: "Erreur lors de la mise à jour de la structure" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const session = await getSession();
+
+  if (!session) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
+
+  try {
+    const { id } = await params;
+
+    const structure = await prisma.structure.findUnique({
+      where: { id },
+      include: { _count: { select: { surveys: true } } },
+    });
+
+    if (!structure) {
+      return NextResponse.json(
+        { error: "Structure non trouvée" },
+        { status: 404 },
+      );
+    }
+
+    if (structure._count.surveys > 0) {
+      return NextResponse.json(
+        {
+          error:
+            "Impossible de supprimer une structure qui contient des enquêtes. Veuillez d'abord supprimer toutes les enquêtes.",
+        },
+        { status: 400 },
+      );
+    }
+
+    await prisma.structure.delete({ where: { id } });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting structure:", error);
+    return NextResponse.json(
+      { error: "Erreur lors de la suppression de la structure" },
       { status: 500 },
     );
   }

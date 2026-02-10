@@ -14,6 +14,7 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
+import Image from "next/image";
 
 interface StepConsentProps {
   initialConsent: boolean;
@@ -126,7 +127,14 @@ export function StepConsent({
                   Epaules Et Vos Ailes&nbsp;&raquo;
                 </p>
               </div>
-              <div className="mt-4 flex justify-end">
+              <div className="mt-4 flex justify-between items-center">
+                <Image
+                  src="/logo-neeva-2022-296x296.jpg"
+                  alt="Fondation Nos Epaules et Vos Ailes"
+                  width={120}
+                  height={120}
+                  className="h-20 w-auto"
+                />
                 <Button
                   variant="outline"
                   onClick={() => setShowEnSavoirPlus(true)}

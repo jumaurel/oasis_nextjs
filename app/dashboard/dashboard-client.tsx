@@ -19,9 +19,9 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { Hospital } from "lucide-react";
 
 interface Structure {
   id: string;
@@ -151,20 +151,7 @@ export function DashboardClient({ userName }: DashboardClientProps) {
                 onClick={() => setIsStructureDialogOpen(true)}
               >
                 Créer un compte
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={2}
-                  stroke="currentColor"
-                  className="h-4 w-4"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-                  />
-                </svg>
+                <Hospital className="ml-2 h-4 w-4" />
               </Button>
             </CardAction>
           </CardHeader>

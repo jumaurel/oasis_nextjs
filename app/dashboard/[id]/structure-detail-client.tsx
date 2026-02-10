@@ -1,11 +1,20 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { EditStructureDialog } from "@/components/structures/edit-structure-dialog";
 import { CreateSurveyDialog } from "@/components/surveys/create-survey-dialog";
 import { EditSurveyDialog } from "@/components/surveys/edit-survey-dialog";
-import { Card, CardHeader, CardTitle, CardAction, CardPanel } from "@/components/ui/card";
+import { extractSurveyData } from "@/lib/extract-survey-data";
+import { toastManager } from "@/components/ui/toast";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardAction,
+  CardPanel,
+} from "@/components/ui/card";
 import {
   Table,
   TableHeader,
@@ -36,6 +45,8 @@ interface Survey {
   maxResponses: number | null;
   status: string;
   surveyType: string;
+  viewCount: number;
+  startedCount: number;
   _count: {
     savedSurveys: number;
   };
@@ -61,6 +72,11 @@ export function StructureDetailClient({ id }: StructureDetailClientProps) {
   const [isSurveyDialogOpen, setIsSurveyDialogOpen] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState<Survey | null>(null);
   const [deletingSurveyId, setDeletingSurveyId] = useState<string | null>(null);
+  const [extractingSurveyId, setExtractingSurveyId] = useState<string | null>(
+    null,
+  );
+  const [isDeletingStructure, setIsDeletingStructure] = useState(false);
+  const router = useRouter();
 
   const fetchStructure = useCallback(async () => {
     try {
@@ -75,9 +91,7 @@ export function StructureDetailClient({ id }: StructureDetailClientProps) {
       const data = await response.json();
       setStructure(data);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Une erreur est survenue",
-      );
+      setError(err instanceof Error ? err.message : "Une erreur est survenue");
     } finally {
       setIsLoading(false);
     }
@@ -100,6 +114,48 @@ export function StructureDetailClient({ id }: StructureDetailClientProps) {
       alert(err instanceof Error ? err.message : "Une erreur est survenue");
     } finally {
       setDeletingSurveyId(null);
+    }
+  };
+
+  const handleExtractData = async (e: React.MouseEvent, surveyId: string) => {
+    e.stopPropagation();
+    setExtractingSurveyId(surveyId);
+    try {
+      await extractSurveyData(surveyId);
+      toastManager.add({
+        title: "Export réussi",
+        description: "Le fichier Excel a été téléchargé.",
+        type: "success",
+      });
+    } catch (err) {
+      toastManager.add({
+        title: "Erreur",
+        description:
+          err instanceof Error ? err.message : "Erreur lors de l'export",
+        type: "error",
+      });
+    } finally {
+      setExtractingSurveyId(null);
+    }
+  };
+
+  const handleDeleteStructure = async () => {
+    setIsDeletingStructure(true);
+    try {
+      const response = await fetch(`/api/structures/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Erreur lors de la suppression");
+      }
+
+      router.push("/dashboard");
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Une erreur est survenue");
+    } finally {
+      setIsDeletingStructure(false);
     }
   };
 
@@ -126,7 +182,9 @@ export function StructureDetailClient({ id }: StructureDetailClientProps) {
         <div className="mx-auto max-w-7xl">
           <Card>
             <CardPanel>
-              <p className="text-destructive">{error || "Structure non trouvée"}</p>
+              <p className="text-destructive">
+                {error || "Structure non trouvée"}
+              </p>
               <Link
                 href="/dashboard"
                 className="mt-3 inline-block text-sm font-medium text-accent-teal hover:underline"
@@ -175,7 +233,10 @@ export function StructureDetailClient({ id }: StructureDetailClientProps) {
               <span className="text-accent-red">{structure.name}</span>
             </CardTitle>
             <CardAction>
-              <Button variant="outline" onClick={() => setIsEditDialogOpen(true)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsEditDialogOpen(true)}
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
@@ -262,11 +323,21 @@ export function StructureDetailClient({ id }: StructureDetailClientProps) {
                   <TableRow>
                     <TableHead>Nom</TableHead>
                     <TableHead className="text-center">Type</TableHead>
-                    <TableHead className="text-center">Date début</TableHead>
-                    <TableHead className="text-center">Date expiration</TableHead>
+                    <TableHead className="text-center">Date de début</TableHead>
+                    <TableHead className="text-center">
+                      Date d&apos;expiration
+                    </TableHead>
                     <TableHead className="text-center">Réponses</TableHead>
+                    <TableHead className="text-center">Vues</TableHead>
+                    <TableHead className="text-center">Démarrées</TableHead>
+                    <TableHead className="text-center">
+                      Taux de complétion
+                    </TableHead>
                     <TableHead className="text-center">Statut</TableHead>
-                    <TableHead className="text-center">Actions</TableHead>
+                    <TableHead className="text-center">
+                      Extraire données
+                    </TableHead>
+                    <TableHead className="text-center">Supprimer</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -288,11 +359,24 @@ export function StructureDetailClient({ id }: StructureDetailClientProps) {
                         {new Date(survey.startDate).toLocaleDateString("fr-FR")}
                       </TableCell>
                       <TableCell className="text-center text-muted-foreground">
-                        {new Date(survey.expirationDate).toLocaleDateString("fr-FR")}
+                        {new Date(survey.expirationDate).toLocaleDateString(
+                          "fr-FR",
+                        )}
                       </TableCell>
                       <TableCell className="text-center text-muted-foreground">
                         {survey._count.savedSurveys}
                         {survey.maxResponses ? ` / ${survey.maxResponses}` : ""}
+                      </TableCell>
+                      <TableCell className="text-center text-muted-foreground">
+                        {survey.viewCount}
+                      </TableCell>
+                      <TableCell className="text-center text-muted-foreground">
+                        {survey.startedCount}
+                      </TableCell>
+                      <TableCell className="text-center text-muted-foreground">
+                        {survey.startedCount > 0
+                          ? `${Math.round((survey._count.savedSurveys / survey.startedCount) * 100)}%`
+                          : "—"}
                       </TableCell>
                       <TableCell className="text-center">
                         <Badge
@@ -305,13 +389,46 @@ export function StructureDetailClient({ id }: StructureDetailClientProps) {
                           }
                         >
                           {survey.status === "EN_COURS"
-                            ? "En cours"
+                            ? "Activée"
                             : survey.status === "FERMEE"
                               ? "Fermée"
                               : "Expirée"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center">
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          className="text-muted-foreground hover:text-accent-teal"
+                          onClick={(e: React.MouseEvent) =>
+                            handleExtractData(e, survey.id)
+                          }
+                          disabled={extractingSurveyId === survey.id}
+                        >
+                          {extractingSurveyId === survey.id ? (
+                            <Spinner className="size-4" />
+                          ) : (
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              strokeWidth={1.5}
+                              stroke="currentColor"
+                              className="h-4 w-4"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
+                              />
+                            </svg>
+                          )}
+                        </Button>
+                      </TableCell>
+                      <TableCell
+                        className="text-center"
+                        onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                      >
                         <AlertDialog>
                           <AlertDialogTrigger
                             render={
@@ -319,7 +436,6 @@ export function StructureDetailClient({ id }: StructureDetailClientProps) {
                                 variant="ghost"
                                 size="icon-sm"
                                 className="text-muted-foreground hover:text-destructive"
-                                onClick={(e: React.MouseEvent) => e.stopPropagation()}
                                 disabled={deletingSurveyId === survey.id}
                               />
                             }
@@ -341,20 +457,27 @@ export function StructureDetailClient({ id }: StructureDetailClientProps) {
                           </AlertDialogTrigger>
                           <AlertDialogPopup>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+                              <AlertDialogTitle>
+                                Confirmer la suppression
+                              </AlertDialogTitle>
                               <AlertDialogDescription>
-                                Êtes-vous sûr de vouloir supprimer cette enquête ? Cette action est irréversible.
+                                Êtes-vous sûr de vouloir supprimer cette enquête
+                                ? Cette action est irréversible.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogClose render={<Button variant="outline" />}>
+                              <AlertDialogClose
+                                render={<Button variant="outline" />}
+                              >
                                 Annuler
                               </AlertDialogClose>
                               <AlertDialogClose
                                 render={
                                   <Button
                                     variant="destructive"
-                                    onClick={() => handleDeleteSurvey(survey.id)}
+                                    onClick={() =>
+                                      handleDeleteSurvey(survey.id)
+                                    }
                                   />
                                 }
                               >
@@ -371,6 +494,61 @@ export function StructureDetailClient({ id }: StructureDetailClientProps) {
             )}
           </CardPanel>
         </Card>
+        {/* Delete Structure */}
+        <div className="mt-6 flex justify-end">
+          <AlertDialog>
+            <AlertDialogTrigger
+              render={
+                <Button variant="destructive" disabled={isDeletingStructure} />
+              }
+            >
+              {isDeletingStructure ? (
+                <Spinner className="size-4" />
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="h-4 w-4"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+                  />
+                </svg>
+              )}
+              Supprimer cette structure
+            </AlertDialogTrigger>
+            <AlertDialogPopup>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Supprimer la structure</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Êtes-vous sûr de vouloir supprimer la structure{" "}
+                  <strong>{structure.name}</strong> ? Cette action est
+                  irréversible.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogClose render={<Button variant="outline" />}>
+                  Annuler
+                </AlertDialogClose>
+                <AlertDialogClose
+                  render={
+                    <Button
+                      variant="destructive"
+                      onClick={handleDeleteStructure}
+                    />
+                  }
+                >
+                  Supprimer
+                </AlertDialogClose>
+              </AlertDialogFooter>
+            </AlertDialogPopup>
+          </AlertDialog>
+        </div>
       </div>
 
       <EditStructureDialog

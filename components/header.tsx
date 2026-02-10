@@ -45,7 +45,18 @@ export function Header() {
           {isQuestionnairePage ? null : isPending ? (
             <div className="h-10 w-24 animate-pulse rounded-lg bg-gray-200" />
           ) : session ? (
-            <Button variant="ghost" onClick={() => signOut()}>
+            <Button
+              variant="ghost"
+              onClick={() =>
+                signOut({
+                  fetchOptions: {
+                    onSuccess: () => {
+                      window.location.href = "/";
+                    },
+                  },
+                })
+              }
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"

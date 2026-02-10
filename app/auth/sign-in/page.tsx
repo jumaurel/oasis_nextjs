@@ -83,7 +83,7 @@ export default function SignInPage() {
               </Button>
             </form>
 
-            <p className="mt-4 text-center text-sm text-muted-foreground">
+            {/*<p className="mt-4 text-center text-sm text-muted-foreground">
               Pas encore de compte ?{" "}
               <Link
                 href="/auth/sign-up"
@@ -91,7 +91,7 @@ export default function SignInPage() {
               >
                 Créer un compte
               </Link>
-            </p>
+            </p>*/}
           </CardPanel>
         </Card>
       </div>

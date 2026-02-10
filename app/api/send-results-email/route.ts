@@ -16,6 +16,7 @@ interface SendResultsEmailBody {
   isAddiction: boolean;
   stetauscopeGraph?: string; // base64 data URI
   aireGraph?: string; // base64 data URI
+  plainData?: { name: string; title: string; displayValue: string; isNode?: boolean }[];
 }
 
 /** Collect a PDFKit document stream into a base64 string */
@@ -61,6 +62,7 @@ export async function POST(request: NextRequest) {
       fullname: body.fullname,
       stetauscopeGraph: body.stetauscopeGraph,
       aireGraph: body.aireGraph,
+      plainData: body.plainData,
     });
     const resultsPdfBase64 = await pdfToBase64(resultsDoc);
 
