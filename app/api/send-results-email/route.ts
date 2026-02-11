@@ -16,7 +16,12 @@ interface SendResultsEmailBody {
   isAddiction: boolean;
   stetauscopeGraph?: string; // base64 data URI
   aireGraph?: string; // base64 data URI
-  plainData?: { name: string; title: string; displayValue: string; isNode?: boolean }[];
+  plainData?: {
+    name: string;
+    title: string;
+    displayValue: string;
+    isNode?: boolean;
+  }[];
 }
 
 /** Collect a PDFKit document stream into a base64 string */
@@ -89,7 +94,7 @@ export async function POST(request: NextRequest) {
 
     // ── Send email via Resend ─────────────────────────────
     const { error } = await resend.emails.send({
-      from: "OASIS - MOTS <questionnaire@emdrpro.fr>",
+      from: "OASIS - MOTS <questionnaire@mots-oasis.fr>",
       to: body.email,
       subject: `Vos résultats OASIS du ${dateStr}`,
       html,

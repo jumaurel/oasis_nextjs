@@ -87,6 +87,9 @@ export function StepQuestionnaire({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     model.applyTheme(themeJson as any);
 
+    // Afficher les numéros de questions (peut être désactivé par le thème)
+    model.showQuestionNumbers = "on";
+
     // Masquer la navigation interne de SurveyJS — on gère la complétion nous-mêmes
     model.showNavigationButtons = "none";
     // Activer le calcul de progression (nécessaire pour progressValue)
