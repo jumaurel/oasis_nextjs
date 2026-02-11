@@ -139,7 +139,7 @@ export function StepConsent({
                   variant="outline"
                   onClick={() => setShowEnSavoirPlus(true)}
                 >
-                  En savoir plus
+                   En savoir plus
                 </Button>
               </div>
             </div>

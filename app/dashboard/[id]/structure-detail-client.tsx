@@ -182,9 +182,7 @@ export function StructureDetailClient({ id }: StructureDetailClientProps) {
         <div className="mx-auto max-w-7xl">
           <Card>
             <CardPanel>
-              <p className="text-destructive">
-                {error || "Structure non trouvée"}
-              </p>
+              <p className="text-destructive">{error || "Compte non trouvé"}</p>
               <Link
                 href="/dashboard"
                 className="mt-3 inline-block text-sm font-medium text-accent-teal hover:underline"
@@ -205,7 +203,7 @@ export function StructureDetailClient({ id }: StructureDetailClientProps) {
         <div className="mb-6">
           <Link
             href="/dashboard"
-            className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="mb-4 inline-flex items-center gap-1 text-base  hover:text-foreground transition-colors"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -229,7 +227,7 @@ export function StructureDetailClient({ id }: StructureDetailClientProps) {
         <Card>
           <CardHeader>
             <CardTitle>
-              <span className="text-accent-teal">Structure : </span>
+              <span className="text-accent-teal">Compte : </span>
               <span className="text-accent-red">{structure.name}</span>
             </CardTitle>
             <CardAction>
@@ -263,12 +261,6 @@ export function StructureDetailClient({ id }: StructureDetailClientProps) {
                   {structure.referentEmail}
                 </span>
               </p>
-              <p>
-                Créée le :{" "}
-                <span className="font-medium text-foreground">
-                  {new Date(structure.createdAt).toLocaleDateString("fr-FR")}
-                </span>
-              </p>
             </div>
           </CardPanel>
         </Card>
@@ -277,8 +269,8 @@ export function StructureDetailClient({ id }: StructureDetailClientProps) {
         <Card className="mt-6">
           <CardHeader>
             <CardTitle>
-              <span className="text-accent-teal">Enquêtes </span>
-              <span className="text-accent-red">de la structure</span>
+              <span className="text-accent-teal">Liste des </span>
+              <span className="text-accent-red">enquêtes</span>
             </CardTitle>
             <CardAction>
               <Button
@@ -359,8 +351,16 @@ export function StructureDetailClient({ id }: StructureDetailClientProps) {
                         {new Date(survey.startDate).toLocaleDateString("fr-FR")}
                       </TableCell>
                       <TableCell className="text-center text-muted-foreground">
-                        {new Date(survey.expirationDate).toLocaleDateString(
-                          "fr-FR",
+                        {new Date(survey.expirationDate) < new Date() ? (
+                          <Badge variant="warning" size="lg">
+                            {new Date(survey.expirationDate).toLocaleDateString(
+                              "fr-FR",
+                            )}
+                          </Badge>
+                        ) : (
+                          new Date(survey.expirationDate).toLocaleDateString(
+                            "fr-FR",
+                          )
                         )}
                       </TableCell>
                       <TableCell className="text-center text-muted-foreground">
@@ -384,9 +384,10 @@ export function StructureDetailClient({ id }: StructureDetailClientProps) {
                             survey.status === "EN_COURS"
                               ? "success"
                               : survey.status === "FERMEE"
-                                ? "secondary"
+                                ? "warning"
                                 : "destructive"
                           }
+                          size="lg"
                         >
                           {survey.status === "EN_COURS"
                             ? "Activée"
@@ -520,13 +521,13 @@ export function StructureDetailClient({ id }: StructureDetailClientProps) {
                   />
                 </svg>
               )}
-              Supprimer cette structure
+              Supprimer ce compte
             </AlertDialogTrigger>
             <AlertDialogPopup>
               <AlertDialogHeader>
-                <AlertDialogTitle>Supprimer la structure</AlertDialogTitle>
+                <AlertDialogTitle>Supprimer le compte</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Êtes-vous sûr de vouloir supprimer la structure{" "}
+                  Êtes-vous sûr de vouloir supprimer le compte{" "}
                   <strong>{structure.name}</strong> ? Cette action est
                   irréversible.
                 </AlertDialogDescription>

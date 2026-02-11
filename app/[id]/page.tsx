@@ -63,7 +63,16 @@ export default async function QuestionnairePage({ params }: Props) {
   const notStarted = survey.startDate > now;
   const isClosed = survey.status === "FERMEE" || survey.status === "EXPIREE";
 
-  if (isClosed || isExpired) {
+  // Vérifier si le nombre maximum de réponses est atteint
+  let maxResponsesReached = false;
+  if (survey.maxResponses) {
+    const responseCount = await prisma.savedSurvey.count({
+      where: { surveyId: id },
+    });
+    maxResponsesReached = responseCount >= survey.maxResponses;
+  }
+
+  if (isClosed || isExpired || maxResponsesReached) {
     return (
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4">
         <div className="w-full max-w-2xl text-center">
@@ -73,17 +82,26 @@ export default async function QuestionnairePage({ params }: Props) {
                 Questionnaire terminé
               </h1>
               <p className="text-muted-foreground">
-                Ce questionnaire n&apos;est plus disponible. L&apos;enquête est{" "}
-                <span
-                  className={
-                    isExpired
-                      ? "font-semibold text-destructive"
-                      : "font-semibold text-muted-foreground"
-                  }
-                >
-                  {isExpired ? "expirée" : "fermée"}
-                </span>
-                .
+                {maxResponsesReached ? (
+                  <>
+                    Ce questionnaire a atteint le nombre maximum de réponses
+                    autorisées et n&apos;accepte plus de nouvelles participations.
+                  </>
+                ) : (
+                  <>
+                    Ce questionnaire n&apos;est plus disponible. L&apos;enquête est{" "}
+                    <span
+                      className={
+                        isExpired
+                          ? "font-semibold text-destructive"
+                          : "font-semibold text-muted-foreground"
+                      }
+                    >
+                      {isExpired ? "expirée" : "fermée"}
+                    </span>
+                    .
+                  </>
+                )}
               </p>
             </CardPanel>
           </Card>
