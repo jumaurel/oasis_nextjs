@@ -431,9 +431,7 @@ export function EditSurveyDialog({
                     </AlertDialogTitle>
                     <AlertDialogDescription>
                       Êtes-vous sûr de vouloir supprimer cette enquête ? Cette
-                      action est irréversible. En revanche, les réponses
-                      anonymes associées à cette enquête seront conservées et
-                      accessibles dans les résultats.
+                      action est irréversible.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
