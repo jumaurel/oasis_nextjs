@@ -169,3 +169,10 @@ html {
     @apply bg-background text-foreground;
   }
 }
+
+/* Reduce SurveyJS spacing on mobile */
+@media (max-width: 639px) {
+  .sd-root-modern {
+    --sjs-base-unit: 4px;
+  }
+}

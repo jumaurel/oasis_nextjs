@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { Card, CardPanel } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -6,17 +5,7 @@ export default function Home() {
   return (
     <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center px-4">
       <main className="mx-auto max-w-4xl text-center">
-        <div className="mb-8 flex justify-center">
-          <Image
-            src="/logo_MOTSeval.png"
-            alt="MOTS OASIS"
-            width={200}
-            height={60}
-            priority
-          />
-        </div>
-
-        <h1 className="mb-6 text-4xl font-bold tracking-tight text-primary sm:text-5xl">
+        <h1 className="mt-8 mb-6 text-4xl font-bold tracking-tight text-primary sm:text-5xl">
           Bienvenue sur <span className="text-accent-teal">OASIS</span>
         </h1>
 

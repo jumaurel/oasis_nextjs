@@ -105,7 +105,7 @@ export function DashboardClient({ userName }: DashboardClientProps) {
     <div className="min-h-[calc(100vh-4rem)] px-4 py-8">
       <div className="mx-auto max-w-7xl">
         {/* Stats row */}
-        <div className="my-6 grid gap-4 sm:grid-cols-3">
+        <div className="mb-6 grid gap-4 sm:grid-cols-3">
           <Card>
             <CardPanel>
               <p className="text-sm font-medium text-muted-foreground">

@@ -122,7 +122,7 @@ export function QuestionnaireClient({ survey }: { survey: SurveyData }) {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] sm:px-4 py-8">
+    <div className="min-h-[calc(100vh-4rem)] sm:px-4 py-4 sm:py-8">
       <div className="mx-auto sm:max-w-3xl lg:max-w-6xl">
         <div>
           {progress.currentStep === 1 && (

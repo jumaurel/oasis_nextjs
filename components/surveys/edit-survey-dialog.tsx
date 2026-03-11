@@ -261,7 +261,7 @@ export function EditSurveyDialog({
           )}
 
           {/* Status toggle section */}
-          <div className="mb-4 flex items-center justify-between rounded-lg border border-border bg-background p-3">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-background p-3">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-foreground">
                 Statut :

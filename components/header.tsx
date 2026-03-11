@@ -2,20 +2,11 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
 import { useSession, signOut } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 
 export function Header() {
   const { data: session, isPending } = useSession();
-  const pathname = usePathname();
-
-  // Sur les pages questionnaire (/[id]), on masque tout ce qui concerne l'auth
-  const isQuestionnairePage =
-    pathname !== "/" &&
-    !pathname.startsWith("/dashboard") &&
-    !pathname.startsWith("/auth") &&
-    !pathname.startsWith("/api");
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-white shadow-sm">
@@ -27,11 +18,11 @@ export function Header() {
               alt="MOTS OASIS"
               width={140}
               height={40}
-              className="h-10 w-auto"
+              className="h-8 w-auto sm:h-10"
               priority
             />
           </Link>
-          {!isQuestionnairePage && session && (
+          {session && (
             <div className="hidden sm:block border-l border-border pl-4">
               <p className="text-xs text-accent-teal font-medium">Compte</p>
               <p className="text-sm font-semibold text-primary">
@@ -42,7 +33,7 @@ export function Header() {
         </div>
 
         <nav className="flex items-center gap-4">
-          {isQuestionnairePage ? null : isPending ? (
+          {isPending ? (
             <div className="h-10 w-24 animate-pulse rounded-lg bg-gray-200" />
           ) : session ? (
             <Button

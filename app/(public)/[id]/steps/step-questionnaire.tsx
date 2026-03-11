@@ -241,7 +241,7 @@ export function StepQuestionnaire({
   return (
     <>
       <Card>
-        <CardPanel>
+        <CardPanel className="p-0 sm:p-6">
           <Survey model={survey} />
         </CardPanel>
         <CardFooter className="justify-between">
