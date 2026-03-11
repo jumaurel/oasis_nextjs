@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toBlob } from "html-to-image";
 import { ResponsiveRadar } from "@nivo/radar";
@@ -56,6 +56,7 @@ export function StepResults({
   onPrevious,
 }: StepResultsProps) {
   const [displayResults, setDisplayResults] = useState(false);
+  const [forceDesktop, setForceDesktop] = useState(false);
 
   // Email form
   const [emailStatus, setEmailStatus] = useState<
@@ -99,37 +100,71 @@ export function StepResults({
 
     try {
       // Capture chart SVGs as base64 images
-      const stetauscopeSvgNode = document.querySelector(
-        "#stetauscopeChart svg",
+      // On mobile, charts render smaller due to responsive containers.
+      // We temporarily force containers to a fixed size so the SVG renders
+      // at full resolution before capture, then restore original styles.
+      const stetauscopeContainer = document.querySelector(
+        "#stetauscopeChart",
       ) as HTMLElement | null;
-      const aireSvgNode = document.querySelector(
-        "#AIREChart svg",
+      const aireContainer = document.querySelector(
+        "#AIREChart",
       ) as HTMLElement | null;
 
       let stetauscopeBase64: string | undefined;
       let aireBase64: string | undefined;
 
-      if (stetauscopeSvgNode) {
-        const blob = await toBlob(stetauscopeSvgNode, {
-          canvasWidth: 615 / window.devicePixelRatio,
-          canvasHeight: 500 / window.devicePixelRatio,
-          backgroundColor: "#fff",
-        });
-        if (blob) {
-          stetauscopeBase64 = await blobToBase64(blob);
+      // Force desktop chart props and container size for capture
+      const origStetStyle = stetauscopeContainer?.style.cssText ?? "";
+      const origAireStyle = aireContainer?.style.cssText ?? "";
+
+      if (stetauscopeContainer) {
+        stetauscopeContainer.style.width = "700px";
+        stetauscopeContainer.style.height = "560px";
+        stetauscopeContainer.style.maxWidth = "none";
+      }
+      if (aireContainer) {
+        aireContainer.style.width = "600px";
+        aireContainer.style.height = "450px";
+        aireContainer.style.maxWidth = "none";
+      }
+      // Switch to desktop props so dots/margins match full-size render
+      setForceDesktop(true);
+      // Wait for React re-render + Nivo ResizeObserver to detect new size
+      await new Promise((r) => setTimeout(r, 600));
+
+      if (stetauscopeContainer) {
+        const svgNode = stetauscopeContainer.querySelector("svg") as HTMLElement | null;
+        if (svgNode) {
+          const blob = await toBlob(svgNode, {
+            canvasWidth: 700,
+            canvasHeight: 560,
+            pixelRatio: 2,
+            backgroundColor: "#fff",
+          });
+          if (blob) {
+            stetauscopeBase64 = await blobToBase64(blob);
+          }
         }
+        stetauscopeContainer.style.cssText = origStetStyle;
       }
 
-      if (aireSvgNode) {
-        const blob = await toBlob(aireSvgNode, {
-          canvasWidth: 600 / window.devicePixelRatio,
-          canvasHeight: 450 / window.devicePixelRatio,
-          backgroundColor: "#fff",
-        });
-        if (blob) {
-          aireBase64 = await blobToBase64(blob);
+      if (aireContainer) {
+        const svgNode = aireContainer.querySelector("svg") as HTMLElement | null;
+        if (svgNode) {
+          const blob = await toBlob(svgNode, {
+            canvasWidth: 600,
+            canvasHeight: 450,
+            pixelRatio: 2,
+            backgroundColor: "#fff",
+          });
+          if (blob) {
+            aireBase64 = await blobToBase64(blob);
+          }
         }
+        aireContainer.style.cssText = origAireStyle;
       }
+
+      setForceDesktop(false);
 
       const res = await fetch("/api/send-results-email", {
         method: "POST",
@@ -217,7 +252,7 @@ export function StepResults({
         <CardHeader>
           <CardTitle className="text-center">Merci !</CardTitle>
         </CardHeader>
-        <CardPanel>
+        <CardPanel className="px-2 py-6 sm:px-6">
           <div className="space-y-6">
             <div className="flex justify-center text-green-600">
               <CheckCircle className="size-16" />
@@ -369,6 +404,7 @@ export function StepResults({
                   aireData={aireData}
                   isAddiction={isAddiction}
                   recomSport={recomSport}
+                  forceDesktop={forceDesktop}
                   onShowStetauscope={() => setShowStetauscopeModal(true)}
                   onShowAIRE={() => setShowAIREModal(true)}
                   onShowRecommandations={() =>
@@ -413,6 +449,7 @@ interface ResultsChartsProps {
   aireData: ReturnType<typeof computeAIREData>;
   isAddiction: boolean;
   recomSport: boolean;
+  forceDesktop?: boolean;
   onShowStetauscope: () => void;
   onShowAIRE: () => void;
   onShowRecommandations: () => void;
@@ -423,10 +460,21 @@ function ResultsCharts({
   aireData,
   isAddiction,
   recomSport,
+  forceDesktop,
   onShowStetauscope,
   onShowAIRE,
   onShowRecommandations,
 }: ResultsChartsProps) {
+  // Adapt chart props for small screens to avoid overlapping dots
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
+  useEffect(() => {
+    const check = () => setIsSmallScreen(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+  const isSmall = forceDesktop ? false : isSmallScreen;
+
   return (
     <div className="mt-4 space-y-8 rounded-xl border p-4 sm:p-6">
       {/* ── Stet'Auscope ── */}
@@ -452,19 +500,22 @@ function ResultsCharts({
             keys={["Score"]}
             indexBy="subject"
             maxValue={100}
-            margin={{ top: 40, right: 80, bottom: 40, left: 80 }}
+            margin={isSmall
+              ? { top: 25, right: 65, bottom: 25, left: 65 }
+              : { top: 40, right: 80, bottom: 40, left: 80 }
+            }
             curve="linearClosed"
-            borderWidth={3}
+            borderWidth={isSmall ? 2 : 3}
             borderColor={{ from: "color" }}
             gridLevels={4}
             gridShape="circular"
-            gridLabelOffset={10}
-            dotSize={26}
+            gridLabelOffset={isSmall ? 6 : 10}
+            dotSize={isSmall ? 16 : 26}
             dotColor={({ index, value }: { index: string; value: number }) =>
               getStetauscopeDotColor(value, index, isAddiction)
             }
             enableDotLabel={true}
-            dotLabelYOffset={5}
+            dotLabelYOffset={isSmall ? 4 : 5}
             dotLabel={({ value }: PointData) => String(value)}
             colors={["#777"]}
             fillOpacity={0}
@@ -474,8 +525,8 @@ function ResultsCharts({
             isInteractive={true}
             theme={{
               grid: { line: { stroke: "#bbb" } },
-              axis: { ticks: { text: { fontSize: 13 } } },
-              dots: { text: { fontSize: 15, fill: "#fff" } },
+              axis: { ticks: { text: { fontSize: isSmall ? 10 : 13 } } },
+              dots: { text: { fontSize: isSmall ? 10 : 15, fill: "#fff" } },
             }}
           />
         </div>
@@ -514,17 +565,20 @@ function ResultsCharts({
               keys={["Score"]}
               indexBy="subject"
               maxValue={9}
-              margin={{ top: 10, right: 120, bottom: 10, left: 120 }}
+              margin={isSmall
+                ? { top: 10, right: 80, bottom: 10, left: 80 }
+                : { top: 10, right: 120, bottom: 10, left: 120 }
+              }
               curve="linearClosed"
-              borderWidth={5}
+              borderWidth={isSmall ? 3 : 5}
               borderColor={{ from: "color" }}
               gridLevels={9}
               gridShape="linear"
-              gridLabelOffset={25}
-              dotSize={26}
+              gridLabelOffset={isSmall ? 15 : 25}
+              dotSize={isSmall ? 20 : 26}
               dotColor="#0d196d"
               enableDotLabel={true}
-              dotLabelYOffset={5}
+              dotLabelYOffset={isSmall ? 4 : 5}
               dotLabel={({ value }: PointData) => String(value)}
               colors={["#888"]}
               fillOpacity={0}
@@ -534,8 +588,8 @@ function ResultsCharts({
               isInteractive={true}
               theme={{
                 grid: { line: { stroke: "#ccc" } },
-                axis: { ticks: { text: { fontSize: 14 } } },
-                dots: { text: { fontSize: 15, fill: "#fff" } },
+                axis: { ticks: { text: { fontSize: isSmall ? 11 : 14 } } },
+                dots: { text: { fontSize: isSmall ? 11 : 15, fill: "#fff" } },
               }}
             />
           </div>
